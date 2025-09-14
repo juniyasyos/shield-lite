@@ -83,6 +83,27 @@ class User extends Authenticatable
 ```
 
 
+## Quick Usage (V4)
+
+- Plugin otomatis mendaftarkan Resources: Roles dan Users.
+- Users Resource sudah memiliki aksi “Set Roles” (row & bulk) untuk mengatur role dan default role per user.
+- Jika Anda sudah punya Users Resource sendiri, sembunyikan resource Anda (mis. `protected static bool $shouldRegisterNavigation = false;`) agar menu tidak dobel.
+- Paket ini memuat migrasi termasuk kolom `users.default_role_id` untuk menyimpan default role.
+- Seeder:
+  - Super Admin (semua permission): `php artisan db:seed --class=Database\\Seeders\\ShieldSuperAdminSeeder`
+  - Admin contoh (khusus permission User): lihat contoh di bagian Seeder di bawah.
+
+
+## Built-in Resources
+
+Shield Lite otomatis menyediakan Resources berikut:
+
+- Roles: pengelolaan peran dan daftar permission.
+- Users: pengelolaan akun pengguna lengkap dengan aksi “Set Roles” (row & bulk) untuk menetapkan role dan default role.
+
+Jika Anda sudah memiliki Users Resource sendiri, sembunyikan atau nonaktifkan navigasinya agar tidak dobel di menu.
+
+
 ## Adding Role Selection
 
 To allow role assignment via the admin panel, add a select input to your `UserForm` class:
@@ -212,6 +233,8 @@ php artisan vendor:publish --tag=shield-migrations
 php artisan vendor:publish --tag=shield-seeders
 ```
 
+Catatan: paket ini otomatis memuat migrasi (termasuk kolom `users.default_role_id`). Publish hanya diperlukan jika Anda ingin mengubah migrasi bawaan.
+
 Key configuration in `config/shield.php`:
 
 - `navigation.label` and `navigation.group`: Customize the plugin menu label & group.
@@ -247,18 +270,48 @@ php artisan db:seed --class=Database\\Seeders\\ShieldSuperAdminSeeder
 
 Configure the role name/guard via `config('shield.superadmin.*')`.
 
+Contoh Admin (hanya permission User):
+
+```php
+// database/seeders/ShieldAdminSeeder.php
+class ShieldAdminSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $gates = [];
+        foreach (Filament::getPanels() as $panel) {
+            $gates = array_merge($gates, array_filter(
+                shield()->panelGates($panel),
+                fn ($g) => str_starts_with($g, 'user.')
+            ));
+        }
+        $gates = array_values(array_unique($gates));
+        ShieldRole::updateOrCreate(['name' => 'Admin', 'guard' => 'web'], [
+            'created_by_name' => 'system',
+            'access' => [$gates],
+        ]);
+    }
+}
+```
+
+Jalankan:
+
+```bash
+php artisan db:seed --class=Database\\Seeders\\ShieldAdminSeeder
+```
+
 ## Default Resource Permissions
 
-When a Filament Resource uses `HasShieldLite` and does not override `defineGates()`, default permissions are auto‑generated using the resource label as slug:
+Deklarasikan permission secara eksplisit via `defineGates()` pada setiap Resource/Page/Widget yang ingin dikendalikan.
 
-- `<slug>.view`
-- `<slug>.create`
-- `<slug>.update`
-- `<slug>.delete`
+Contoh umum untuk CRUD:
 
-Example: a `UserResource` with label “User” yields `user.view`, `user.create`, `user.update`, `user.delete`.
+- `user.index`
+- `user.create`
+- `user.update`
+- `user.delete`
 
-You can override `defineGates()` to fully customize permissions.
+Anda bebas menentukan skema permission sendiri, selama konsisten digunakan saat pengecekan akses (`hexa()->can(...)`).
 
 ## Role Form UI/UX
 

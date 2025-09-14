@@ -22,7 +22,8 @@ class ShieldLite implements Plugin
     public function register(Panel $panel): void
     {
         $panel->resources([
-            RoleResource::class
+            RoleResource::class,
+            \juniyasyos\ShieldLite\Resources\Users\UserResource::class,
         ]);
     }
 
