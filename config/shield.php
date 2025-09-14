@@ -34,10 +34,17 @@ return [
         'group' => 'Settings',
     ],
 
-    // Toggle auto-registration of package Filament resources
+    // Toggle auto-registration of Filament resources
     'register_resources' => [
         'roles' => true,
         'users' => true,
+    ],
+
+    // Which Resource classes to register on the Panel.
+    // You can point these to App\Filament\Resources\... after publishing stubs.
+    'resources' => [
+        'roles' => \juniyasyos\ShieldLite\Resources\Roles\RoleResource::class,
+        'users' => \juniyasyos\ShieldLite\Resources\Users\UserResource::class,
     ],
 
     // Super admin defaults for example seeder

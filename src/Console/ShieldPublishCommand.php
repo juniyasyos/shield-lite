@@ -45,7 +45,7 @@ class ShieldPublishCommand extends Command
 
         if ($this->option('resources')) {
             $this->publishResources();
-            $this->disablePackageResourcesInConfig();
+            $this->mapAppResourcesInConfig();
         }
 
         $this->info('Shield Lite publish complete.');
@@ -78,7 +78,7 @@ class ShieldPublishCommand extends Command
         $this->info('Filament resources published to app/Filament/Resources.');
     }
 
-    protected function disablePackageResourcesInConfig(): void
+    protected function mapAppResourcesInConfig(): void
     {
         $configFile = config_path('shield.php');
 
@@ -97,11 +97,18 @@ class ShieldPublishCommand extends Command
 
         $content = file_get_contents($configFile) ?: '';
 
-        // Replace register_resources flags to false
-        $content = preg_replace("/'roles'\s*=>\s*true/", "'roles' => false", $content);
-        $content = preg_replace("/'users'\s*=>\s*true/", "'users' => false", $content);
+        // Ensure register_resources remain enabled
+        $content = preg_replace("/'roles'\s*=>\s*false/", "'roles' => true", $content);
+        $content = preg_replace("/'users'\s*=>\s*false/", "'users' => true", $content);
+
+        // Map resources to app classes
+        $content = preg_replace(
+            "/'resources'\s*=>\s*\[\s*'roles'\s*=>\s*[^,]+,\s*'users'\s*=>\s*[^\]]+\]/s",
+            "'resources' => [\n        'roles' => \\App\\Filament\\Resources\\Roles\\RoleResource::class,\n        'users' => \\App\\Filament\\Resources\\Users\\UserResource::class,\n    ]",
+            $content
+        );
 
         file_put_contents($configFile, $content);
-        $this->info('Disabled package resource registration in config/shield.php');
+        $this->info('Mapped resources to App\\Filament in config/shield.php');
     }
 }

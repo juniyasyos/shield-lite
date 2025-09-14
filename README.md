@@ -258,6 +258,7 @@ Options:
 
 - `--force` Overwrite any existing files.
 - `--resources` Publish minimal Resource stubs (that extend the package Resources) into `app/Filament/Resources` and disable package resources in `config/shield.php` to avoid conflicts. This avoids code duplication; you only override what you need.
+  - Perintah ini juga memetakan config `shield.resources.roles/users` agar Panel mendaftarkan Resource milik App, bukan Resource paket.
 
 ## Seeder: Super Admin
 

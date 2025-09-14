@@ -24,10 +24,10 @@ class ShieldLite implements Plugin
         // Allow disabling package resources from config to avoid conflicts
         $resources = [];
         if (config('shield.register_resources.roles', true)) {
-            $resources[] = RoleResource::class;
+            $resources[] = config('shield.resources.roles', \\juniyasyos\\ShieldLite\\Resources\\Roles\\RoleResource::class);
         }
         if (config('shield.register_resources.users', true)) {
-            $resources[] = \juniyasyos\ShieldLite\Resources\Users\UserResource::class;
+            $resources[] = config('shield.resources.users', \juniyasyos\ShieldLite\Resources\Users\UserResource::class);
         }
 
         if (! empty($resources)) {
