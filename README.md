@@ -257,7 +257,7 @@ php artisan shield:publish
 Options:
 
 - `--force` Overwrite any existing files.
- - `--resources` Publish Filament Resources into `app/Filament/Resources` and disable package resources in `config/shield.php` to avoid conflicts.
+- `--resources` Publish minimal Resource stubs (that extend the package Resources) into `app/Filament/Resources` and disable package resources in `config/shield.php` to avoid conflicts. This avoids code duplication; you only override what you need.
 
 ## Seeder: Super Admin
 

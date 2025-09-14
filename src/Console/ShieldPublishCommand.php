@@ -60,16 +60,9 @@ class ShieldPublishCommand extends Command
         $targetBase = app_path('Filament/Resources');
 
         $files = [
-            // Roles
+            // Minimal stubs extending package resources
             'Roles/RoleResource.php',
-            'Roles/Pages/ListRoles.php',
-            'Roles/Pages/CreateRole.php',
-            'Roles/Pages/EditRole.php',
-            // Users
             'Users/UserResource.php',
-            'Users/Pages/ListUsers.php',
-            'Users/Pages/CreateUser.php',
-            'Users/Pages/EditUser.php',
         ];
 
         foreach ($files as $relPath) {

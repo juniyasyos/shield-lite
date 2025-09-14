@@ -24,8 +24,6 @@ class RoleResource extends Resource
         return config('shield.models.role', ShieldRole::class);
     }
 
-    protected static bool $shouldRegisterNavigation = false;
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLockClosed;
 
     public function roleDescription()
