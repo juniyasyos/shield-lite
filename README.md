@@ -33,6 +33,7 @@ Currently in version 3, Shield Lite is more intuitive, customizable, and product
   - [Laravel Integration](#laravel-integration)
 - [Publishing & Config](#publishing--config)
 - [Seeder: Super Admin](#seeder-super-admin)
+- [Seeder: Users + Roles](#seeder-users--roles)
 - [Default Resource Permissions](#default-resource-permissions)
 - [Role Form UI/UX](#role-form-uiux)
 - [Available Traits](#available-traits)
@@ -92,6 +93,7 @@ class User extends Authenticatable
 - Seeder:
   - Super Admin (semua permission): `php artisan db:seed --class=Database\\Seeders\\ShieldSuperAdminSeeder`
   - Admin contoh (khusus permission User): lihat contoh di bagian Seeder di bawah.
+  - Users + Roles contoh: `php artisan db:seed --class=Database\\Seeders\\UserSeeder`
 
 
 ## Built-in Resources
@@ -299,6 +301,36 @@ Jalankan:
 ```bash
 php artisan db:seed --class=Database\\Seeders\\ShieldAdminSeeder
 ```
+
+## Seeder: Users + Roles
+
+Seeder contoh ini menambahkan 3 user sekaligus role-nya, serta menyetel `default_role_id` pada masing‑masing user.
+
+- Role yang dibuat: `Admin`, `Manager`, `Staff` (guard: `web`).
+- User yang dibuat:
+  - Email: `admin@gmail.com` — Role: `Admin`
+  - Email: `manager@gmail.com` — Role: `Manager`
+  - Email: `staff@gmail.com` — Role: `Staff`
+- Password default: `password`
+
+Langkah pemakaian:
+
+1) Publish seeder (opsional, jika ingin mengubah):
+
+```bash
+php artisan vendor:publish --tag=shield-seeders
+```
+
+2) Jalankan seeder:
+
+```bash
+php artisan db:seed --class=Database\\Seeders\\UserSeeder
+```
+
+Catatan:
+
+- Pastikan model `App\\Models\\User` menggunakan trait `juniyasyos\\ShieldLite\\ShieldLiteRolePermission` agar relasi `roles()` tersedia.
+- Paket ini sudah memuat migrasi pivot `shield_role_user` dan kolom `users.default_role_id`.
 
 ## Default Resource Permissions
 
