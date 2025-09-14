@@ -12,6 +12,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use juniyasyos\ShieldLite\HasShieldLite;
 use juniyasyos\ShieldLite\Models\ShieldRole;
@@ -109,11 +110,8 @@ class UserResource extends Resource
                     ->toggleable(),
             ])
             ->filters([])
-            ->actions([
-                Action::make('edit')
-                    ->label(__('Edit'))
-                    ->icon('heroicon-o-pencil-square')
-                    ->url(fn (User $record): string => static::getUrl('edit', ['record' => $record]))
+            ->recordActions([
+                EditAction::make()
                     ->visible(fn (User $record) => hexa()->can('user.update')),
                 Action::make('setRoles')
                     ->label(__('Set Roles'))
@@ -144,7 +142,7 @@ class UserResource extends Resource
                     })
                     ->visible(fn ($record) => hexa()->can('user.update')),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 BulkAction::make('setRoles')
                     ->label(__('Set Roles'))
                     ->icon('heroicon-o-lock-closed')

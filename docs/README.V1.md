@@ -101,7 +101,7 @@ public static function canAccess(): bool
 You can use the `visible()` method on several `Class Components`. For example, let's try it on a button.
 
 ```php
-Tables\Actions\EditAction::make()
+Actions\EditAction::make()
     ->visible(shield()->can('access.user.edit')),
 ```
 

@@ -44,21 +44,33 @@ class ShieldHelper
 
     private function userCan(Authenticatable $user, array|string $permissions)
     {
-        if (method_exists($user, 'roles')) {
-            if (! empty($user->roles)) {
-                $gates = [];
-                foreach ($user->roles as $role) {
-                    if (is_array($role->access)) {
-                        foreach ($role->access as $access) {
-                            $gates[] = $access;
+        if (! method_exists($user, 'roles')) {
+            return false;
+        }
+
+        $gates = [];
+
+        // Collect and flatten role access arrays: [[gate1, gate2], ...] => [gate1, gate2, ...]
+        foreach ($user->roles as $role) {
+            $access = $role->access ?? [];
+            if (is_array($access)) {
+                foreach ($access as $group) {
+                    if (is_array($group)) {
+                        foreach ($group as $gate) {
+                            $gates[] = $gate;
                         }
                     }
                 }
-                $permissions = is_array($permissions) ? $permissions : [$permissions];
-                return ! empty(array_intersect($gates, $permissions));
             }
+        }
+
+        // If the user has no roles/permissions, optionally treat as superuser
+        if (empty($gates)) {
             return (bool) config('shield.superuser_if_no_role', false);
         }
-        return false;
+
+        $permissions = is_array($permissions) ? $permissions : [$permissions];
+
+        return ! empty(array_intersect($gates, $permissions));
     }
 }
