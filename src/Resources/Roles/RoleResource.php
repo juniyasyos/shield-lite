@@ -29,12 +29,12 @@ class RoleResource extends Resource
 
     public static function getNavigationGroup(): UnitEnum|string|null
     {
-        return __(config('shield.navigation.group', 'Settings'));
+        return __(config('shield.navigation.role_group', 'Settings'));
     }
 
-    public static function getNavigationLabel(): ?string
+    public static function getNavigationLabel(): string
     {
-        return __(config('shield.navigation.label', 'Role & Permissions'));
+        return __(config('shield.navigation.role_label', 'Role & Permissions'));
     }
 
     public function roleDescription()

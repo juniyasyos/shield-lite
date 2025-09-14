@@ -49,8 +49,8 @@ class ShieldLite implements Plugin
 
         // Optional custom nav item is disabled by default to avoid duplication
         if (config('shield.navigation.use_nav_item', false)) {
-            $navLabel = __(config('shield.navigation.label', 'Role & Permissions'));
-            $navGroup = __(config('shield.navigation.group', 'Settings'));
+            $navLabel = __(config('shield.navigation.role_label', 'Role & Permissions'));
+            $navGroup = __(config('shield.navigation.role_group', 'Settings'));
 
             $panel->navigationItems([
                 NavigationItem::make($navLabel)
