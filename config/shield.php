@@ -3,6 +3,7 @@
 return [
     'models' => [
         'role' => \juniyasyos\ShieldLite\Models\ShieldRole::class,
+        'user' => \App\Models\User::class,
     ],
 
     // Optional: define custom permissions to appear under the "Custom" tab
@@ -30,8 +31,10 @@ return [
 
     // Navigation settings (label & group for the plugin menu item)
     'navigation' => [
-        'label' => 'Role & Permissions',
-        'group' => 'Settings',
+        'role_label' => 'Role & Permissions',
+        'role_group' => 'Settings',
+        'users_label' => 'Users',
+        'users_group' => 'Settings',
     ],
 
     // Toggle auto-registration of Filament resources

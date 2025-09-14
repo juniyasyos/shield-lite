@@ -240,7 +240,7 @@ Catatan: paket ini otomatis memuat migrasi (termasuk kolom `users.default_role_i
 
 Key configuration in `config/shield.php`:
 
-- `navigation.label` and `navigation.group`: Customize the plugin menu label & group.
+- `navigation.label` and `navigation.role_group`: Customize the plugin menu label & group.
 - `custom_permissions`: Define custom permission keys shown under the “Custom” tab.
 - `superuser_if_no_role` (bool): When true, users without roles have full access.
 - `cache.enabled` (bool), `cache.ttl` (int), `cache.store` (string|null): Cache gate discovery and UI groupings per panel for performance.

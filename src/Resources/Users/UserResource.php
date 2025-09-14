@@ -21,12 +21,20 @@ class UserResource extends Resource
 {
     use HasShieldLite;
 
-    protected static ?string $model = User::class;
+    public static function getModel(): string
+    {
+        return config('shield.models.user', User::class);
+    }
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user';
     public static function getNavigationGroup(): UnitEnum|string|null
     {
-        return 'User Managements';
+        return __(config('shield.navigation.users_group', 'Settings'));
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __(config('shield.navigation.users_label', 'Users'));
     }
 
     public function defineGates(): array

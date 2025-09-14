@@ -3,6 +3,7 @@
 namespace juniyasyos\ShieldLite\Resources\Roles;
 
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -24,7 +25,17 @@ class RoleResource extends Resource
         return config('shield.models.role', ShieldRole::class);
     }
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedLockClosed;
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedLockClosed;
+
+    public static function getNavigationGroup(): UnitEnum|string|null
+    {
+        return __(config('shield.navigation.group', 'Settings'));
+    }
+
+    public static function getNavigationLabel(): ?string
+    {
+        return __(config('shield.navigation.label', 'Role & Permissions'));
+    }
 
     public function roleDescription()
     {

@@ -24,7 +24,7 @@ class ShieldLite implements Plugin
         // Allow disabling package resources from config to avoid conflicts
         $resources = [];
         if (config('shield.register_resources.roles', true)) {
-            $resources[] = config('shield.resources.roles', \\juniyasyos\\ShieldLite\\Resources\\Roles\\RoleResource::class);
+            $resources[] = config('shield.resources.roles', \juniyasyos\ShieldLite\Resources\Roles\RoleResource::class);
         }
         if (config('shield.register_resources.users', true)) {
             $resources[] = config('shield.resources.users', \juniyasyos\ShieldLite\Resources\Users\UserResource::class);
@@ -47,17 +47,20 @@ class ShieldLite implements Plugin
         $this->registerGates($panel);
         $this->registerGateList($panel);
 
-        $navLabel = __(config('shield.navigation.label', 'Role & Permissions'));
-        $navGroup = __(config('shield.navigation.group', 'Settings'));
+        // Optional custom nav item is disabled by default to avoid duplication
+        if (config('shield.navigation.use_nav_item', false)) {
+            $navLabel = __(config('shield.navigation.label', 'Role & Permissions'));
+            $navGroup = __(config('shield.navigation.group', 'Settings'));
 
-        $panel->navigationItems([
-            NavigationItem::make($navLabel)
-                ->visible(fn() => shield()->can('role.index'))
-                ->url(RoleResource::getUrl())
-                ->isActiveWhen(fn() => request()->fullUrlIs(RoleResource::getUrl() . '*'))
-                ->icon(Heroicon::OutlinedLockClosed)
-                ->group($navGroup),
-        ]);
+            $panel->navigationItems([
+                NavigationItem::make($navLabel)
+                    ->visible(fn() => shield()->can('role.index'))
+                    ->url(RoleResource::getUrl())
+                    ->isActiveWhen(fn() => request()->fullUrlIs(RoleResource::getUrl() . '*'))
+                    ->icon(Heroicon::OutlinedLockClosed)
+                    ->group($navGroup),
+            ]);
+        }
     }
 
     public static function make(): static
