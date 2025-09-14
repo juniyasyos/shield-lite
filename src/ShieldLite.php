@@ -21,6 +21,21 @@ class ShieldLite implements Plugin
 
     public function register(Panel $panel): void
     {
+        // Allow disabling package resources from config to avoid conflicts
+        $resources = [];
+        if (config('shield.register_resources.roles', true)) {
+            $resources[] = RoleResource::class;
+        }
+        if (config('shield.register_resources.users', true)) {
+            $resources[] = \juniyasyos\ShieldLite\Resources\Users\UserResource::class;
+        }
+
+        if (! empty($resources)) {
+            $panel->resources($resources);
+        }
+
+        return;
+
         $panel->resources([
             RoleResource::class,
             \juniyasyos\ShieldLite\Resources\Users\UserResource::class,

@@ -10,11 +10,12 @@ use Filament\Tables;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkAction;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Tables\Columns\TextColumn;
 use juniyasyos\ShieldLite\HasShieldLite;
 use juniyasyos\ShieldLite\Models\ShieldRole;
+use Illuminate\Support\Collection;
 
 class UserResource extends Resource
 {
@@ -25,7 +26,7 @@ class UserResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user';
     public static function getNavigationGroup(): UnitEnum|string|null
     {
-        return 'User Management';
+        return 'User Managements';
     }
 
     public function defineGates(): array
@@ -101,7 +102,11 @@ class UserResource extends Resource
             ])
             ->filters([])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Action::make('edit')
+                    ->label(__('Edit'))
+                    ->icon('heroicon-o-pencil-square')
+                    ->url(fn (User $record): string => static::getUrl('edit', ['record' => $record]))
+                    ->visible(fn (User $record) => hexa()->can('user.update')),
                 Action::make('setRoles')
                     ->label(__('Set Roles'))
                     ->icon('heroicon-o-lock-closed')
@@ -118,7 +123,11 @@ class UserResource extends Resource
                             ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
                             ->searchable(),
                     ])
-                    ->action(function ($record, array $data) {
+                    ->fillForm(fn (User $record) => [
+                        'roles' => $record->roles()->pluck('id')->all(),
+                        'default_role_id' => $record->default_role_id,
+                    ])
+                    ->action(function (User $record, array $data) {
                         $record->roles()->sync($data['roles'] ?? []);
                         if (! empty($data['default_role_id'])) {
                             $record->default_role_id = $data['default_role_id'];
@@ -144,7 +153,7 @@ class UserResource extends Resource
                             ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
                             ->searchable(),
                     ])
-                    ->action(function ($records, array $data) {
+                    ->action(function (Collection $records, array $data) {
                         foreach ($records as $record) {
                             $record->roles()->sync($data['roles'] ?? []);
                             if (! empty($data['default_role_id'])) {

@@ -3,6 +3,7 @@
 namespace juniyasyos\ShieldLite;
 
 use Illuminate\Support\ServiceProvider;
+use juniyasyos\ShieldLite\Console\ShieldPublishCommand;
 
 
 class ShieldLiteServiceProvider extends ServiceProvider
@@ -22,6 +23,13 @@ class ShieldLiteServiceProvider extends ServiceProvider
         $this->registerView();
         $this->registerTranslations();
         $this->setupConfig();
+
+        // Register package commands
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                ShieldPublishCommand::class,
+            ]);
+        }
     }
 
     protected function setupConfig()
@@ -44,6 +52,18 @@ class ShieldLiteServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../database/seeders' => database_path('seeders'),
         ], 'shield-seeders');
+
+        // Publish views for customization
+        $this->publishes([
+            __DIR__ . '/../resources/views' => resource_path('views/vendor/shield'),
+        ], 'shield-views');
+
+        // Publish translations for customization
+        $this->publishes([
+            __DIR__ . '/../resources/lang' => function_exists('lang_path')
+                ? lang_path('vendor/shield')
+                : resource_path('lang/vendor/shield'),
+        ], 'shield-translations');
     }
 
     protected function registerView()

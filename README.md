@@ -32,6 +32,7 @@ Currently in version 3, Shield Lite is more intuitive, customizable, and product
 - [Visible Access](#visible-access)
   - [Laravel Integration](#laravel-integration)
 - [Publishing & Config](#publishing--config)
+- [Publish Command](#publish-command)
 - [Seeder: Super Admin](#seeder-super-admin)
 - [Seeder: Users + Roles](#seeder-users--roles)
 - [Default Resource Permissions](#default-resource-permissions)
@@ -244,6 +245,19 @@ Key configuration in `config/shield.php`:
 - `superuser_if_no_role` (bool): When true, users without roles have full access.
 - `cache.enabled` (bool), `cache.ttl` (int), `cache.store` (string|null): Cache gate discovery and UI groupings per panel for performance.
 - `superadmin.name`, `superadmin.guard`: Defaults used by the example Super Admin seeder.
+
+## Publish Command
+
+Publish everything for Shield Lite (config, migrations, seeders, views, translations) and rebuild Filament assets in one go:
+
+```bash
+php artisan shield:publish
+```
+
+Options:
+
+- `--force` Overwrite any existing files.
+ - `--resources` Publish Filament Resources into `app/Filament/Resources` and disable package resources in `config/shield.php` to avoid conflicts.
 
 ## Seeder: Super Admin
 
