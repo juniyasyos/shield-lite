@@ -37,6 +37,14 @@ class RoleResource extends Resource
         return __(config('shield.navigation.role_label', 'Role & Permissions'));
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $navEnabled = (bool) config('shield.navigation.roles_nav', app()->environment('local'));
+        $envs = (array) config('shield.navigation.visible_in', []);
+        $envOk = empty($envs) ? true : app()->environment($envs);
+        return $navEnabled && $envOk && static::canAccess();
+    }
+
     public function roleDescription()
     {
         return __('Control user access by managing roles and their permissions.');

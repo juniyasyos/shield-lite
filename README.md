@@ -34,6 +34,7 @@ Currently in version 3, Shield Lite is more intuitive, customizable, and product
 - [Publishing & Config](#publishing--config)
 - [Publish Command](#publish-command)
 - [Permission Generator](#permission-generator)
+- [Navigation Visibility](#navigation-visibility)
 - [Seeder: Super Admin](#seeder-super-admin)
 - [Seeder: Users + Roles](#seeder-users--roles)
 - [Default Resource Permissions](#default-resource-permissions)
@@ -242,6 +243,8 @@ Catatan: paket ini otomatis memuat migrasi (termasuk kolom `users.default_role_i
 Key configuration in `config/shield.php`:
 
 - `navigation.label` and `navigation.role_group`: Customize the plugin menu label & group.
+- `navigation.roles_nav` / `navigation.users_nav` (bool): Control whether Roles/Users resources appear in the sidebar. Defaults to visible on `local` only.
+- `navigation.visible_in` (array): Limit visibility to certain environments, e.g. `['local', 'staging']`.
 - `custom_permissions`: Define custom permission keys shown under the “Custom” tab.
 - `superuser_if_no_role` (bool): When true, users without roles have full access.
 - `cache.enabled` (bool), `cache.ttl` (int), `cache.store` (string|null): Cache gate discovery and UI groupings per panel for performance.
@@ -295,6 +298,35 @@ Cara Kerja Singkat:
 - Anda dapat menimpa/menambah permission custom pada masing-masing Resource/Page/Widget melalui `defineGates()`.
 - Permission custom global juga bisa ditambahkan melalui `config('shield.custom_permissions')` dan akan ikut terdeteksi.
 - Mendukung multi-panel; output dikelompokkan per panel dan disatukan ke daftar `all_gates`.
+
+## Navigation Visibility
+
+Terkadang Anda hanya butuh pengaturan permission tanpa menampilkan menu Resources (Roles/Users) di produksi. Anda bisa mengendalikan visibilitas navigasi lewat konfigurasi berikut (default: tampil di `local` saja):
+
+```php
+// config/shield.php
+return [
+    'navigation' => [
+        'roles_nav' => env('SHIELD_ROLES_NAV', env('APP_ENV') === 'local'),
+        'users_nav' => env('SHIELD_USERS_NAV', env('APP_ENV') === 'local'),
+        // Opsional: batasi ke environment tertentu
+        'visible_in' => [], // contoh: ['local', 'staging']
+    ],
+];
+```
+
+Atau kendalikan via ENV:
+
+```env
+SHIELD_ROLES_NAV=false
+SHIELD_USERS_NAV=false
+```
+
+Catatan:
+
+- Resource tetap terdaftar (tergantung `register_resources`), namun item navigasi bisa disembunyikan. Akses langsung via URL tetap tunduk pada `canAccess()` dan permission terkait.
+- Jika ingin menonaktifkan pendaftaran Resource sama sekali, atur:
+  - `config('shield.register_resources.roles')` atau `users` ke `false`.
 
 ## Seeder: Super Admin
 

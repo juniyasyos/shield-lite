@@ -35,6 +35,13 @@ return [
         'role_group' => 'Settings',
         'users_label' => 'Users',
         'users_group' => 'Settings',
+        // Control whether resources appear in the navigation.
+        // Defaults: visible in local, hidden in non-local.
+        'roles_nav' => env('SHIELD_ROLES_NAV', env('APP_ENV') === 'local'),
+        'users_nav' => env('SHIELD_USERS_NAV', env('APP_ENV') === 'local'),
+        // Optional: restrict visibility to specific environments only (e.g., ['local','staging']).
+        // Leave empty array to ignore.
+        'visible_in' => [],
     ],
 
     // Toggle auto-registration of Filament resources

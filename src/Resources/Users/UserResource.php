@@ -38,6 +38,14 @@ class UserResource extends Resource
         return __(config('shield.navigation.users_label', 'Users'));
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $navEnabled = (bool) config('shield.navigation.users_nav', app()->environment('local'));
+        $envs = (array) config('shield.navigation.visible_in', []);
+        $envOk = empty($envs) ? true : app()->environment($envs);
+        return $navEnabled && $envOk && static::canAccess();
+    }
+
     public function defineGates(): array
     {
         return [
