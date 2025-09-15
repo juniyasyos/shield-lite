@@ -28,6 +28,7 @@ class ShieldLiteServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ShieldPublishCommand::class,
+                \juniyasyos\ShieldLite\Console\ShieldGenerateCommand::class,
             ]);
         }
     }

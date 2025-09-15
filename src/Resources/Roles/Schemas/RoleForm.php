@@ -38,7 +38,7 @@ class RoleForm
                                 'lg' => 3,
                             ])
                             ->gridDirection(GridDirection::Row)
-                            ->searchable()
+                            // ->searchable()
                             ->options($role['names'] ?? [])
                             ->bulkToggleable()
                             ->hint(__('Centang untuk memberi akses fitur terkait'))
@@ -65,7 +65,7 @@ class RoleForm
                             'lg' => 3,
                         ])
                         ->gridDirection(GridDirection::Row)
-                        ->searchable()
+                        // ->searchable()
                         ->options($customOptions)
                         ->bulkToggleable()
                         ->hint(__('Izin khusus di luar resource/page/widget'))

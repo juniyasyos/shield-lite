@@ -33,6 +33,7 @@ Currently in version 3, Shield Lite is more intuitive, customizable, and product
   - [Laravel Integration](#laravel-integration)
 - [Publishing & Config](#publishing--config)
 - [Publish Command](#publish-command)
+- [Permission Generator](#permission-generator)
 - [Seeder: Super Admin](#seeder-super-admin)
 - [Seeder: Users + Roles](#seeder-users--roles)
 - [Default Resource Permissions](#default-resource-permissions)
@@ -259,6 +260,41 @@ Options:
 - `--force` Overwrite any existing files.
 - `--resources` Publish minimal Resource stubs (that extend the package Resources) into `app/Filament/Resources` and disable package resources in `config/shield.php` to avoid conflicts. This avoids code duplication; you only override what you need.
   - Perintah ini juga memetakan config `shield.resources.roles/users` agar Panel mendaftarkan Resource milik App, bukan Resource paket.
+
+## Permission Generator
+
+Generate permission otomatis dari Resources, Pages, dan Widgets yang terdaftar di setiap Filament Panel.
+
+- Command: `php artisan shield:generate`
+- Fungsi: Memindai semua komponen yang memiliki `defineGates()`/`roleName()` lalu mengumpulkan daftar permission dan ringkasannya per panel (mirip Filament Shield).
+
+Opsi:
+
+- `--dump=path`: Simpan output ke file JSON.
+  - Jika path relatif, file akan disimpan ke `storage/app/shield/{path}`.
+- `--super-admin`: Buat/Update role “Super Admin” dengan semua permission yang ditemukan.
+  - Nama dan guard dapat diubah via `config/shield.php` (`superadmin.name`, `superadmin.guard`).
+
+Contoh:
+
+```bash
+# Lihat daftar permission yang terdeteksi (preview di terminal)
+php artisan shield:generate
+
+# Simpan hasil lengkap ke file JSON
+php artisan shield:generate --dump=permissions.json
+
+# Sinkronkan role Super Admin dengan semua permission
+php artisan shield:generate --super-admin
+```
+
+Cara Kerja Singkat:
+
+- Untuk Resource, trait `HasShieldLite` otomatis mengisi default permission CRUD:
+  - `*.view`, `*.create`, `*.update`, `*.delete` (label mengikuti `getModelLabel`).
+- Anda dapat menimpa/menambah permission custom pada masing-masing Resource/Page/Widget melalui `defineGates()`.
+- Permission custom global juga bisa ditambahkan melalui `config('shield.custom_permissions')` dan akan ikut terdeteksi.
+- Mendukung multi-panel; output dikelompokkan per panel dan disatukan ke daftar `all_gates`.
 
 ## Seeder: Super Admin
 
