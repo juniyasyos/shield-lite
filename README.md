@@ -1,357 +1,710 @@
-# Filament V4 & Shield Lite V3
+# Shield Lite# Filament V4 & Shield Lite V3
 
-[![Latest Stable Version](https://poser.pugx.org/juniyasyos/shield-lite/v/stable)](https://packagist.org/packages/juniyasyos/shield-lite)
+
+
+A flexible and lightweight Laravel permission and role management system designed for Filament applications.[![Latest Stable Version](https://poser.pugx.org/juniyasyos/shield-lite/v/stable)](https://packagist.org/packages/juniyasyos/shield-lite)
+
 [![Total Downloads](https://poser.pugx.org/juniyasyos/shield-lite/downloads)](https://packagist.org/packages/juniyasyos/shield-lite)
-[![License](https://poser.pugx.org/juniyasyos/shield-lite/license)](https://packagist.org/packages/juniyasyos/shield-lite)
+
+## Features[![License](https://poser.pugx.org/juniyasyos/shield-lite/license)](https://packagist.org/packages/juniyasyos/shield-lite)
 
 
-**Filament Shield Lite** is a free and developer-friendly **role and permission management plugin** for [FilamentPHP V4](https://filamentphp.com/).  
-It helps you manage user roles and access permissions across Resources, Pages, and Widgets — with support for multi-panel apps via custom guards.
 
-Currently in version 3, Shield Lite is more intuitive, customizable, and production-ready.
+- **Trait-based Integration**: Easy setup with User model traits
 
-![Banner](https://github.com/juniyasyos/assets/blob/main/hexa/v2/banner.png?raw=true)
+- **Multiple Permission Backends**: Support for Spatie Permission package or built-in array-based permissions**Filament Shield Lite** is a free and developer-friendly **role and permission management plugin** for [FilamentPHP V4](https://filamentphp.com/).  
 
+- **Automatic Policy Resolution**: Generate CRUD policies automatically without writing boilerplate codeIt helps you manage user roles and access permissions across Resources, Pages, and Widgets — with support for multi-panel apps via custom guards.
+
+- **Configurable Ability Naming**: Flexible ability format configuration (dot notation, colon notation, etc.)
+
+- **Generic Policies**: Use magic methods for automatic permission checkingCurrently in version 3, Shield Lite is more intuitive, customizable, and production-ready.
+
+- **Filament Panel Integration**: Seamless integration with Filament admin panels
+
+- **Laravel Gate Integration**: Works with Laravel's built-in authorization system![Banner](https://github.com/juniyasyos/assets/blob/main/hexa/v2/banner.png?raw=true)
+
+
+
+## Installation
 
 ## Version Docs.
 
+Install via Composer:
+
 |Version|Filament|Doc.|
-|:-:|:-:|-|
-|V1|V3|[Read Doc.](https://github.com/juniyasyos/shield-lite/blob/main/docs/README.V1.md)|
-|V2|V3|[Read Doc.](https://github.com/juniyasyos/shield-lite/blob/main/docs/README.V2.md)|
+
+```bash|:-:|:-:|-|
+
+composer require juniyasyos/shield-lite|V1|V3|[Read Doc.](https://github.com/juniyasyos/shield-lite/blob/main/docs/README.V1.md)|
+
+```|V2|V3|[Read Doc.](https://github.com/juniyasyos/shield-lite/blob/main/docs/README.V2.md)|
+
 |V3|V4|[Read Doc.](https://github.com/juniyasyos/shield-lite/blob/main/README.md)|
+
+Publish the configuration file:
 
 ## Index
 
-- [Installation](#installation)
-- [Adding Role Selection](#adding-role-selection)
+```bash
+
+php artisan vendor:publish --tag=shield-lite-config- [Installation](#installation)
+
+```- [Adding Role Selection](#adding-role-selection)
+
 - [Multi Panel Support](#multi-panel-support)
-- [Defining Permissions](#defining-permissions)
+
+## Quick Start- [Defining Permissions](#defining-permissions)
+
 - [Access Control](#access-control)
-  - [Check Permissions in Code](#check-permissions-in-code)
+
+### 1. Configure Your User Model  - [Check Permissions in Code](#check-permissions-in-code)
+
 - [Visible Access](#visible-access)
-  - [Laravel Integration](#laravel-integration)
+
+Add the Shield Lite traits to your User model:  - [Laravel Integration](#laravel-integration)
+
 - [Publishing & Config](#publishing--config)
-- [Publish Command](#publish-command)
-- [Permission Generator](#permission-generator)
+
+```php- [Publish Command](#publish-command)
+
+<?php- [Permission Generator](#permission-generator)
+
 - [Navigation Visibility](#navigation-visibility)
-- [Seeder: Super Admin](#seeder-super-admin)
+
+namespace App\Models;- [Seeder: Super Admin](#seeder-super-admin)
+
 - [Seeder: Users + Roles](#seeder-users--roles)
-- [Default Resource Permissions](#default-resource-permissions)
-- [Role Form UI/UX](#role-form-uiux)
-- [Available Traits](#available-traits)
-- [Features in Pro Version](#features-in-pro-version)
+
+use Illuminate\Foundation\Auth\User as Authenticatable;- [Default Resource Permissions](#default-resource-permissions)
+
+use juniyasyos\ShieldLite\Concerns\HasShieldRoles;- [Role Form UI/UX](#role-form-uiux)
+
+use juniyasyos\ShieldLite\Concerns\HasShieldPermissions;- [Available Traits](#available-traits)
+
+use juniyasyos\ShieldLite\Concerns\AuthorizesShield;- [Features in Pro Version](#features-in-pro-version)
+
 - [License](#license)
-- [Issues & Feedback](#issues--feedback)
 
-    
-## Installation
+class User extends Authenticatable- [Issues & Feedback](#issues--feedback)
 
-Install the package via Composer:
+{
+
+    use HasShieldRoles, HasShieldPermissions, AuthorizesShield;    
+
+    ## Installation
+
+    // Your existing model code...
+
+}Install the package via Composer:
+
+```
 
 ```bash
-composer require juniyasyos/shield-lite
+
+### 2. Configure Permission Drivercomposer require juniyasyos/shield-lite
+
 ````
+
+Update `config/shield-lite.php`:
 
 Run the database migration:
 
-```bash
-php artisan migrate
-```
-
-Register the plugin in your Filament panel:
-
 ```php
+
+return [```bash
+
+    'driver' => 'spatie', // or 'array' for built-in permissionsphp artisan migrate
+
+    'ability_format' => '{resource}.{action}', // users.view, users.create```
+
+    'auto_resolve_policies' => true, // Automatic policy registration
+
+    // ... other configurationRegister the plugin in your Filament panel:
+
+];
+
+``````php
+
 use Filament\Panel;
-use juniyasyos\ShieldLite\ShieldLite;
 
-public function panel(Panel $panel): Panel
+### 3. Usage Examplesuse juniyasyos\ShieldLite\ShieldLite;
+
+
+
+#### Check Permissionspublic function panel(Panel $panel): Panel
+
 {
-    return $panel
-        ->plugins([
-            ShieldLite::make(),
-        ]);
-}
+
+```php    return $panel
+
+// Using Laravel Gates        ->plugins([
+
+if ($user->can('users.view')) {            ShieldLite::make(),
+
+    // User can view users        ]);
+
+}}
+
 ```
 
-Apply the trait to your `User` model:
+// Using traits directly
 
-```php
+if ($user->hasPermissionTo('users.create')) {Apply the trait to your `User` model:
+
+    // User can create users
+
+}```php
+
 use juniyasyos\ShieldLite\ShieldLiteRolePermission;
 
-class User extends Authenticatable
-{
-    use HasFactory, Notifiable;
-    use ShieldLiteRolePermission;
+// Check roles
+
+if ($user->hasRole('admin')) {class User extends Authenticatable
+
+    // User has admin role{
+
+}    use HasFactory, Notifiable;
+
+```    use ShieldLiteRolePermission;
+
 }
-```
+
+#### Assign Roles and Permissions```
 
 
-## Quick Usage (V4)
+
+```php
+
+// Assign role## Quick Usage (V4)
+
+$user->assignRole('admin');
 
 - Plugin otomatis mendaftarkan Resources: Roles dan Users.
-- Users Resource sudah memiliki aksi “Set Roles” (row & bulk) untuk mengatur role dan default role per user.
-- Jika Anda sudah punya Users Resource sendiri, sembunyikan resource Anda (mis. `protected static bool $shouldRegisterNavigation = false;`) agar menu tidak dobel.
+
+// Give permission- Users Resource sudah memiliki aksi “Set Roles” (row & bulk) untuk mengatur role dan default role per user.
+
+$user->givePermissionTo('users.create');- Jika Anda sudah punya Users Resource sendiri, sembunyikan resource Anda (mis. `protected static bool $shouldRegisterNavigation = false;`) agar menu tidak dobel.
+
 - Paket ini memuat migrasi termasuk kolom `users.default_role_id` untuk menyimpan default role.
-- Seeder:
-  - Super Admin (semua permission): `php artisan db:seed --class=Database\\Seeders\\ShieldSuperAdminSeeder`
-  - Admin contoh (khusus permission User): lihat contoh di bagian Seeder di bawah.
+
+// Sync roles- Seeder:
+
+$user->syncRoles(['admin', 'moderator']);  - Super Admin (semua permission): `php artisan db:seed --class=Database\\Seeders\\ShieldSuperAdminSeeder`
+
+```  - Admin contoh (khusus permission User): lihat contoh di bagian Seeder di bawah.
+
   - Users + Roles contoh: `php artisan db:seed --class=Database\\Seeders\\UserSeeder`
 
+#### Automatic Policy Resolution
 
-## Built-in Resources
 
-Shield Lite otomatis menyediakan Resources berikut:
 
-- Roles: pengelolaan peran dan daftar permission.
-- Users: pengelolaan akun pengguna lengkap dengan aksi “Set Roles” (row & bulk) untuk menetapkan role dan default role.
+Shield Lite automatically generates policies for your models:## Built-in Resources
 
-Jika Anda sudah memiliki Users Resource sendiri, sembunyikan atau nonaktifkan navigasinya agar tidak dobel di menu.
 
+
+```phpShield Lite otomatis menyediakan Resources berikut:
+
+// This automatically works with your User model
+
+Gate::authorize('view', $user); // Checks users.view permission- Roles: pengelolaan peran dan daftar permission.
+
+Gate::authorize('update', $user); // Checks users.update permission- Users: pengelolaan akun pengguna lengkap dengan aksi “Set Roles” (row & bulk) untuk menetapkan role dan default role.
+
+Gate::authorize('delete', $user); // Checks users.delete permission
+
+```Jika Anda sudah memiliki Users Resource sendiri, sembunyikan atau nonaktifkan navigasinya agar tidak dobel di menu.
+
+
+
+## Configuration
 
 ## Adding Role Selection
 
+### Permission Drivers
+
 To allow role assignment via the admin panel, add a select input to your `UserForm` class:
 
+#### Spatie Permission Driver
+
 ```php
-use Filament\Schemas\Components\Select;
+
+When using `'driver' => 'spatie'`, Shield Lite integrates with the Spatie Permission package:use Filament\Schemas\Components\Select;
+
 use Filament\Schemas\Components\TextInput;
 
-public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
+```bash
+
+composer require spatie/laravel-permissionpublic static function form(Form $form): Form
+
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"{
+
+php artisan migrate    return $form
+
+```        ->schema([
+
             TextInput::make('email')
-                ->unique(ignoreRecord: true)
+
+#### Array Driver                ->unique(ignoreRecord: true)
+
                 ->required(),
 
+When using `'driver' => 'array'`, permissions are defined in the configuration:
+
             Select::make('roles')
-                ->label(__('Role Name'))
-                ->relationship('roles', 'name')
-                ->placeholder(__('Superuser')),
-        ]);
-}
-```
+
+```php                ->label(__('Role Name'))
+
+'permissions' => [                ->relationship('roles', 'name')
+
+    'roles' => [                ->placeholder(__('Superuser')),
+
+        'super_admin' => ['*'], // All permissions        ]);
+
+        'admin' => [}
+
+            'users.*', // All user permissions```
+
+            'posts.*', // All post permissions
+
+        ],
+
+        'user' => [## Multi Panel Support
+
+            'users.view', // Can view own profile
+
+            'users.update', // Can update own profileShield Lite supports multiple panels, each with its own `auth guard`.
+
+        ],
+
+    ],```php
+
+    'users' => [public function panel(Panel $panel): Panel
+
+        1 => ['special.permission'], // User-specific permissions{
+
+    ],    return $panel->authGuard('reseller');
+
+],}
+
+``````
 
 
-## Multi Panel Support
 
-Shield Lite supports multiple panels, each with its own `auth guard`.
+### Ability Formats```php
 
-```php
 public function panel(Panel $panel): Panel
-{
-    return $panel->authGuard('reseller');
-}
-```
 
-```php
-public function panel(Panel $panel): Panel
-{
+Configure how abilities are named:{
+
     return $panel->authGuard('customer');
-}
-```
 
-Configure guards in `config/auth.php`.
+```php}
+
+'ability_format' => '{resource}.{action}', // users.view```
+
+// or
+
+'ability_format' => '{action}:{resource}', // view:usersConfigure guards in `config/auth.php`.
+
+// or  
+
+'ability_format' => '{resource}_{action}', // users_view
+
+```## Defining Permissions
 
 
-## Defining Permissions
 
-Define permissions using the `defineGates()` method on Resources, Pages, or Widgets:
+### Super Admin ConfigurationDefine permissions using the `defineGates()` method on Resources, Pages, or Widgets:
 
-```php
+
+
+Configure how super admins are identified:```php
+
 use juniyasyos\ShieldLite\HasShieldLite;
 
-class UserResource extends Resource
-{
-    use HasShieldLite;
+```php
 
-    public function defineGates(): array
-    {
-        return [
-            'user.index' => __('Allows viewing the user list'),
-            'user.create' => __('Allows creating a new user'),
-            'user.update' => __('Allows updating users'),
+'super_admin' => [class UserResource extends Resource
+
+    'role' => 'super_admin', // Check by role name{
+
+    // OR    use HasShieldLite;
+
+    'attribute' => 'is_super_admin', // Check by user attribute
+
+    // OR    public function defineGates(): array
+
+    'user_ids' => [1], // Check by user ID    {
+
+    // OR        return [
+
+    'callback' => fn($user) => $user->email === 'admin@example.com',            'user.index' => __('Allows viewing the user list'),
+
+],            'user.create' => __('Allows creating a new user'),
+
+```            'user.update' => __('Allows updating users'),
+
             'user.delete' => __('Allows deleting users'),
-        ];
+
+## Filament Integration        ];
+
     }
-}
+
+### Using with Filament Resources}
+
 ```
 
+Shield Lite automatically generates policies for your Filament resources:
 
-## Access Control
+
+
+```php## Access Control
+
+<?php
 
 Users with no assigned role can optionally be treated as **Superusers** (full access) when enabled via config. By default this is disabled for security.
 
+namespace App\Filament\Resources;
+
 To restrict access to a resource:
 
-```php
-public static function canAccess(): bool
-{
-    return shield()->can('user.index');
-}
-```
-
-
-### Check Permissions in Code
-
-Useful in queued jobs, commands, or background services:
+use Filament\Resources\Resource;
 
 ```php
-return shield()->user(User::first())->can('user.index');
-```
 
+class UserResource extends Resourcepublic static function canAccess(): bool
+
+{{
+
+    protected static ?string $model = User::class;    return shield()->can('user.index');
+
+    }
+
+    // Shield Lite automatically handles authorization for:```
+
+    // - viewAny() -> users.view_any
+
+    // - view() -> users.view  
+
+    // - create() -> users.create### Check Permissions in Code
+
+    // - update() -> users.update
+
+    // - delete() -> users.deleteUseful in queued jobs, commands, or background services:
+
+    // - restore() -> users.restore
+
+    // - forceDelete() -> users.force_delete```php
+
+}return shield()->user(User::first())->can('user.index');
+
+``````
+
+
+
+### Custom Policies
 
 ### Visible Access
+
+If you need custom logic, create your own policy and Shield Lite will detect it:
 
 Use `visible()` to conditionally display UI elements:
 
 ```php
+
+<?php```php
+
 Actions\CreateAction::make('create')
-    ->visible(fn() => shield()->can(['user.index', 'user.create']));
+
+namespace App\Policies;    ->visible(fn() => shield()->can(['user.index', 'user.create']));
+
 ```
 
+use App\Models\User;
 
-### Laravel Integration
 
-You can still use Laravel’s native authorization:
 
-```php
-Auth::user()->can('user.create');
+class UserPolicy### Laravel Integration
 
-Gate::allows('user.create');
+{
 
-Gate::forUser(User::first())->allows('user.create');
+    public function viewAny(User $user): boolYou can still use Laravel’s native authorization:
 
-@can('user.create')
-    // Blade directive
-@endcan
-```
+    {
 
-## Publishing & Config
+        return $user->can('users.view_any');```php
 
-Publish configuration, migrations, and example seeders:
+    }Auth::user()->can('user.create');
 
-```bash
+    
+
+    public function view(User $user, User $model): boolGate::allows('user.create');
+
+    {
+
+        return $user->can('users.view') || $user->id === $model->id;Gate::forUser(User::first())->allows('user.create');
+
+    }
+
+    @can('user.create')
+
+    // ... other methods    // Blade directive
+
+}@endcan
+
+``````
+
+
+
+## Advanced Usage## Publishing & Config
+
+
+
+### Custom AbilitiesPublish configuration, migrations, and example seeders:
+
+
+
+Define custom abilities for specific resources:```bash
+
 php artisan vendor:publish --tag=shield-config
-php artisan vendor:publish --tag=shield-migrations
-php artisan vendor:publish --tag=shield-seeders
+
+```phpphp artisan vendor:publish --tag=shield-migrations
+
+'abilities' => [php artisan vendor:publish --tag=shield-seeders
+
+    'custom' => [```
+
+        'users' => ['ban', 'activate', 'impersonate'],
+
+        'posts' => ['publish', 'feature', 'pin'],Catatan: paket ini otomatis memuat migrasi (termasuk kolom `users.default_role_id`). Publish hanya diperlukan jika Anda ingin mengubah migrasi bawaan.
+
+    ],
+
+],Key configuration in `config/shield.php`:
+
 ```
-
-Catatan: paket ini otomatis memuat migrasi (termasuk kolom `users.default_role_id`). Publish hanya diperlukan jika Anda ingin mengubah migrasi bawaan.
-
-Key configuration in `config/shield.php`:
 
 - `navigation.label` and `navigation.role_group`: Customize the plugin menu label & group.
-- `navigation.roles_nav` / `navigation.users_nav` (bool): Control whether Roles/Users resources appear in the sidebar. Defaults to visible on `local` only.
+
+### Excluding Models from Auto-Policy- `navigation.roles_nav` / `navigation.users_nav` (bool): Control whether Roles/Users resources appear in the sidebar. Defaults to visible on `local` only.
+
 - `navigation.visible_in` (array): Limit visibility to certain environments, e.g. `['local', 'staging']`.
-- `custom_permissions`: Define custom permission keys shown under the “Custom” tab.
+
+Prevent certain models from having automatic policies:- `custom_permissions`: Define custom permission keys shown under the “Custom” tab.
+
 - `superuser_if_no_role` (bool): When true, users without roles have full access.
-- `cache.enabled` (bool), `cache.ttl` (int), `cache.store` (string|null): Cache gate discovery and UI groupings per panel for performance.
-- `superadmin.name`, `superadmin.guard`: Defaults used by the example Super Admin seeder.
 
-## Publish Command
+```php- `cache.enabled` (bool), `cache.ttl` (int), `cache.store` (string|null): Cache gate discovery and UI groupings per panel for performance.
 
-Publish everything for Shield Lite (config, migrations, seeders, views, translations) and rebuild Filament assets in one go:
+'excluded_models' => [- `superadmin.name`, `superadmin.guard`: Defaults used by the example Super Admin seeder.
 
-```bash
+    App\Models\SystemLog::class,
+
+    App\Models\AuditTrail::class,## Publish Command
+
+],
+
+```Publish everything for Shield Lite (config, migrations, seeders, views, translations) and rebuild Filament assets in one go:
+
+
+
+### Manual Policy Registration```bash
+
 php artisan shield:publish
-```
 
-Options:
+Disable auto-discovery and register policies manually:```
 
-- `--force` Overwrite any existing files.
+
+
+```phpOptions:
+
+'auto_resolve_policies' => false,
+
+```- `--force` Overwrite any existing files.
+
 - `--resources` Publish minimal Resource stubs (that extend the package Resources) into `app/Filament/Resources` and disable package resources in `config/shield.php` to avoid conflicts. This avoids code duplication; you only override what you need.
-  - Perintah ini juga memetakan config `shield.resources.roles/users` agar Panel mendaftarkan Resource milik App, bukan Resource paket.
 
-## Permission Generator
+Then register in your `AuthServiceProvider`:  - Perintah ini juga memetakan config `shield.resources.roles/users` agar Panel mendaftarkan Resource milik App, bukan Resource paket.
+
+
+
+```php## Permission Generator
+
+use juniyasyos\ShieldLite\Policies\GenericPolicy;
 
 Generate permission otomatis dari Resources, Pages, dan Widgets yang terdaftar di setiap Filament Panel.
 
-- Command: `php artisan shield:generate`
-- Fungsi: Memindai semua komponen yang memiliki `defineGates()`/`roleName()` lalu mengumpulkan daftar permission dan ringkasannya per panel (mirip Filament Shield).
+protected $policies = [
+
+    User::class => GenericPolicy::class,- Command: `php artisan shield:generate`
+
+];- Fungsi: Memindai semua komponen yang memiliki `defineGates()`/`roleName()` lalu mengumpulkan daftar permission dan ringkasannya per panel (mirip Filament Shield).
+
+```
 
 Opsi:
 
+## Middleware
+
 - `--dump=path`: Simpan output ke file JSON.
-  - Jika path relatif, file akan disimpan ke `storage/app/shield/{path}`.
+
+Shield Lite provides middleware for protecting routes:  - Jika path relatif, file akan disimpan ke `storage/app/shield/{path}`.
+
 - `--super-admin`: Buat/Update role “Super Admin” dengan semua permission yang ditemukan.
-  - Nama dan guard dapat diubah via `config/shield.php` (`superadmin.name`, `superadmin.guard`).
 
-Contoh:
+```php  - Nama dan guard dapat diubah via `config/shield.php` (`superadmin.name`, `superadmin.guard`).
 
-```bash
+// In your routes
+
+Route::middleware(['auth', 'shield.permission:users.view'])->group(function () {Contoh:
+
+    // Protected routes
+
+});```bash
+
 # Lihat daftar permission yang terdeteksi (preview di terminal)
-php artisan shield:generate
 
-# Simpan hasil lengkap ke file JSON
-php artisan shield:generate --dump=permissions.json
+Route::middleware(['auth', 'shield.role:admin'])->group(function () {php artisan shield:generate
 
-# Sinkronkan role Super Admin dengan semua permission
+    // Admin only routes  
+
+});# Simpan hasil lengkap ke file JSON
+
+```php artisan shield:generate --dump=permissions.json
+
+
+
+## API Reference# Sinkronkan role Super Admin dengan semua permission
+
 php artisan shield:generate --super-admin
-```
 
-Cara Kerja Singkat:
+### HasShieldRoles Trait```
 
-- Untuk Resource, trait `HasShieldLite` otomatis mengisi default permission CRUD:
-  - `*.view`, `*.create`, `*.update`, `*.delete` (label mengikuti `getModelLabel`).
-- Anda dapat menimpa/menambah permission custom pada masing-masing Resource/Page/Widget melalui `defineGates()`.
-- Permission custom global juga bisa ditambahkan melalui `config('shield.custom_permissions')` dan akan ikut terdeteksi.
-- Mendukung multi-panel; output dikelompokkan per panel dan disatukan ke daftar `all_gates`.
 
-## Navigation Visibility
 
-Terkadang Anda hanya butuh pengaturan permission tanpa menampilkan menu Resources (Roles/Users) di produksi. Anda bisa mengendalikan visibilitas navigasi lewat konfigurasi berikut (default: tampil di `local` saja):
+```phpCara Kerja Singkat:
 
-```php
-// config/shield.php
-return [
-    'navigation' => [
-        'roles_nav' => env('SHIELD_ROLES_NAV', env('APP_ENV') === 'local'),
-        'users_nav' => env('SHIELD_USERS_NAV', env('APP_ENV') === 'local'),
-        // Opsional: batasi ke environment tertentu
-        'visible_in' => [], // contoh: ['local', 'staging']
-    ],
+$user->assignRole(string|array $roles): self
+
+$user->removeRole(string|array $roles): self  - Untuk Resource, trait `HasShieldLite` otomatis mengisi default permission CRUD:
+
+$user->syncRoles(array $roles): self  - `*.view`, `*.create`, `*.update`, `*.delete` (label mengikuti `getModelLabel`).
+
+$user->hasRole(string $role): bool- Anda dapat menimpa/menambah permission custom pada masing-masing Resource/Page/Widget melalui `defineGates()`.
+
+$user->hasAnyRole(array $roles): bool- Permission custom global juga bisa ditambahkan melalui `config('shield.custom_permissions')` dan akan ikut terdeteksi.
+
+$user->hasAllRoles(array $roles): bool- Mendukung multi-panel; output dikelompokkan per panel dan disatukan ke daftar `all_gates`.
+
+$user->getRoleNames(): Collection
+
+```## Navigation Visibility
+
+
+
+### HasShieldPermissions TraitTerkadang Anda hanya butuh pengaturan permission tanpa menampilkan menu Resources (Roles/Users) di produksi. Anda bisa mengendalikan visibilitas navigasi lewat konfigurasi berikut (default: tampil di `local` saja):
+
+
+
+```php```php
+
+$user->givePermissionTo(string|array $permissions): self// config/shield.php
+
+$user->revokePermissionTo(string|array $permissions): selfreturn [
+
+$user->syncPermissions(array $permissions): self    'navigation' => [
+
+$user->hasPermissionTo(string $permission): bool        'roles_nav' => env('SHIELD_ROLES_NAV', env('APP_ENV') === 'local'),
+
+$user->hasAnyPermission(array $permissions): bool        'users_nav' => env('SHIELD_USERS_NAV', env('APP_ENV') === 'local'),
+
+$user->hasAllPermissions(array $permissions): bool        // Opsional: batasi ke environment tertentu
+
+$user->getAllPermissions(): Collection        'visible_in' => [], // contoh: ['local', 'staging']
+
+```    ],
+
 ];
-```
 
-Atau kendalikan via ENV:
+### AuthorizesShield Trait```
 
-```env
-SHIELD_ROLES_NAV=false
+
+
+```phpAtau kendalikan via ENV:
+
+$user->can(string $ability, $arguments = []): bool
+
+$user->cannot(string $ability, $arguments = []): bool```env
+
+```SHIELD_ROLES_NAV=false
+
 SHIELD_USERS_NAV=false
+
+### Ability Class```
+
+
+
+```phpCatatan:
+
+Ability::normalize(string $resource, string $action): string
+
+Ability::parse(string $ability): array- Resource tetap terdaftar (tergantung `register_resources`), namun item navigasi bisa disembunyikan. Akses langsung via URL tetap tunduk pada `canAccess()` dan permission terkait.
+
+Ability::generateCrudAbilities(string $resource): array- Jika ingin menonaktifkan pendaftaran Resource sama sekali, atur:
+
+Ability::matches(string $ability, string $pattern): bool  - `config('shield.register_resources.roles')` atau `users` ke `false`.
+
 ```
-
-Catatan:
-
-- Resource tetap terdaftar (tergantung `register_resources`), namun item navigasi bisa disembunyikan. Akses langsung via URL tetap tunduk pada `canAccess()` dan permission terkait.
-- Jika ingin menonaktifkan pendaftaran Resource sama sekali, atur:
-  - `config('shield.register_resources.roles')` atau `users` ke `false`.
 
 ## Seeder: Super Admin
 
+## Testing
+
 A publishable example seeder creates/updates a “Super Admin” role and grants all discovered permissions across panels.
+
+Shield Lite includes comprehensive tests. Run them with:
 
 1) Publish the seeder:
 
 ```bash
-php artisan vendor:publish --tag=shield-seeders
+
+vendor/bin/pest packages/juniyasyos/shield-lite/tests/```bash
+
+```php artisan vendor:publish --tag=shield-seeders
+
 ```
+
+## Contributing
 
 2) Register in `DatabaseSeeder`:
 
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
 ```php
-public function run(): void
+
+## Licensepublic function run(): void
+
 {
-    $this->call(\\Database\\Seeders\\ShieldSuperAdminSeeder::class);
+
+The MIT License (MIT). Please see [License File](LICENSE) for more information.    $this->call(\\Database\\Seeders\\ShieldSuperAdminSeeder::class);
+
 }
-```
 
-3) Seed:
+## Changelog```
 
-```bash
+
+
+See [CHANGELOG.md](CHANGELOG.md) for recent changes.3) Seed:
+
+
+
+## Upgrade Guide```bash
+
 php artisan db:seed --class=Database\\Seeders\\ShieldSuperAdminSeeder
-```
+
+See [UPGRADE.md](UPGRADE.md) for migration instructions from previous versions.```
 
 Configure the role name/guard via `config('shield.superadmin.*')`.
 
