@@ -1,52 +1,22 @@
 <?php
 
 return [
-    'user_model' => App\Models\User::class,
-    'guard' => 'web',
-    'driver' => 'spatie',
-    'auto_resolve_policies' => true,
-    'excluded_models' => [],
+    'guard' => env('SHIELD_LITE_GUARD', 'web'),
+    'super_admin_role' => env('SHIELD_LITE_SUPER_ADMIN_ROLE', 'Super-Admin'),
+
+    // Permission backend driver: 'spatie' or 'array'
+    'driver' => env('SHIELD_LITE_DRIVER', 'spatie'),
+
+    // ex: "{resource}.{action}" -> "users.update", "posts.viewAny"
     'ability_format' => '{resource}.{action}',
-    'abilities' => [
-        'crud_actions' => [
-            'viewAny',
-            'view',
-            'create',
-            'update',
-            'delete',
-            'restore',
-            'forceDelete',
-        ],
-        'custom' => [],
-        'global' => [],
+
+    // daftar resource yang akan di-seed (opsional, bisa disuntik dari app)
+    'resources' => [
+        'users'  => ['viewAny','view','create','update','delete','restore','forceDelete'],
+        'roles'  => ['viewAny','view','create','update','delete'],
+        'posts'  => ['viewAny','view','create','update','delete'],
     ],
-    'permissions' => [
-        'super_admin' => ['*'],
-        'admin' => ['users.*', 'roles.*', 'permissions.*'],
-        'user' => ['users.view', 'users.update'],
-        'roles' => [
-            'super_admin' => ['*'],
-            'admin' => [
-                'users.view_any',
-                'users.view',
-                'users.create',
-                'users.update',
-                'users.delete',
-            ],
-            'user' => ['users.view'],
-        ],
-        'users' => [],
-    ],
-    'super_admin' => [
-        'role' => 'super_admin',
-    ],
-    'cache' => [
-        'enabled' => true,
-        'ttl' => 3600,
-        'key' => 'shield_lite_permissions',
-    ],
-    'panels' => [
-        'auto_discover_resources' => true,
-        'excluded_resources' => [],
-    ],
+
+    // opsional: dukung teams Spatie (aktifkan di config/permission.php pada host app)
+    'teams' => false,
 ];

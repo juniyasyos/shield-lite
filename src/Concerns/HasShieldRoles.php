@@ -29,23 +29,48 @@ trait HasShieldRoles
 
     /**
      * Check if the user has a specific role.
+     * Compatible with Spatie Permission signature: hasRole($roles, ?string $guard = null)
      */
-    public function hasRole(string $roleName, ?string $guard = null): bool
+    public function hasRole($roles, ?string $guard = null): bool
     {
         $guard = $guard ?? config('shield-lite.guard', 'web');
 
-        return $this->roles()
-            ->where('name', $roleName)
-            ->where('guard', $guard)
-            ->exists();
+        // Handle both string and array inputs for compatibility
+        if (is_string($roles)) {
+            return $this->roles()
+                ->where('name', $roles)
+                ->where('guard', $guard)
+                ->exists();
+        }
+
+        if (is_array($roles)) {
+            return $this->roles()
+                ->whereIn('name', $roles)
+                ->where('guard', $guard)
+                ->exists();
+        }
+
+        return false;
     }
 
     /**
      * Check if the user has any of the given roles.
+     * Compatible with Spatie Permission signature: hasAnyRole(...$roles)
      */
-    public function hasAnyRole(array $roles, ?string $guard = null): bool
+    public function hasAnyRole(...$roles): bool
     {
+        // Extract guard from last parameter if it's a string and looks like a guard
+        $guard = null;
+        if (count($roles) > 1 && is_string(end($roles)) && !in_array(end($roles), ['Super-Admin', 'admin', 'user'])) {
+            $guard = array_pop($roles);
+        }
+
         $guard = $guard ?? config('shield-lite.guard', 'web');
+
+        // Flatten array if first argument is array
+        if (count($roles) === 1 && is_array($roles[0])) {
+            $roles = $roles[0];
+        }
 
         return $this->roles()
             ->whereIn('name', $roles)
@@ -55,9 +80,22 @@ trait HasShieldRoles
 
     /**
      * Check if the user has all of the given roles.
+     * Compatible with Spatie Permission signature: hasAllRoles(...$roles)
      */
-    public function hasAllRoles(array $roles, ?string $guard = null): bool
+    public function hasAllRoles(...$roles): bool
     {
+        // Extract guard from last parameter if it's a string and looks like a guard
+        $guard = null;
+        if (count($roles) > 1 && is_string(end($roles)) && !in_array(end($roles), ['Super-Admin', 'admin', 'user'])) {
+            $guard = array_pop($roles);
+        }
+
+        $guard = $guard ?? config('shield-lite.guard', 'web');
+
+        // Flatten array if first argument is array
+        if (count($roles) === 1 && is_array($roles[0])) {
+            $roles = $roles[0];
+        }
         $guard = $guard ?? config('shield-lite.guard', 'web');
 
         $userRoles = $this->roles()
@@ -70,17 +108,29 @@ trait HasShieldRoles
 
     /**
      * Assign a role to the user.
+     * Compatible with Spatie Permission signature: assignRole($roles)
      */
-    public function assignRole(string $roleName, ?string $guard = null): self
+    public function assignRole($roles, ?string $guard = null): self
     {
         $guard = $guard ?? config('shield-lite.guard', 'web');
 
-        $role = ShieldRole::where('name', $roleName)
-            ->where('guard', $guard)
-            ->first();
+        // Handle both string and array inputs for compatibility
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
 
-        if ($role && !$this->hasRole($roleName, $guard)) {
-            $this->roles()->attach($role->id);
+        if (!is_array($roles)) {
+            return $this;
+        }
+
+        foreach ($roles as $roleName) {
+            $role = ShieldRole::where('name', $roleName)
+                ->where('guard', $guard)
+                ->first();
+
+            if ($role && !$this->hasRole($roleName, $guard)) {
+                $this->roles()->attach($role->id);
+            }
         }
 
         return $this;
@@ -88,17 +138,29 @@ trait HasShieldRoles
 
     /**
      * Remove a role from the user.
+     * Compatible with Spatie Permission signature: removeRole($roles)
      */
-    public function removeRole(string $roleName, ?string $guard = null): self
+    public function removeRole($roles, ?string $guard = null): self
     {
         $guard = $guard ?? config('shield-lite.guard', 'web');
 
-        $role = ShieldRole::where('name', $roleName)
-            ->where('guard', $guard)
-            ->first();
+        // Handle both string and array inputs for compatibility
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
 
-        if ($role) {
-            $this->roles()->detach($role->id);
+        if (!is_array($roles)) {
+            return $this;
+        }
+
+        foreach ($roles as $roleName) {
+            $role = ShieldRole::where('name', $roleName)
+                ->where('guard', $guard)
+                ->first();
+
+            if ($role) {
+                $this->roles()->detach($role->id);
+            }
         }
 
         return $this;
@@ -106,12 +168,22 @@ trait HasShieldRoles
 
     /**
      * Sync roles for the user.
+     * Compatible with Spatie Permission signature: syncRoles($roles)
      */
-    public function syncRoles(array $roleNames, ?string $guard = null): self
+    public function syncRoles($roles, ?string $guard = null): self
     {
         $guard = $guard ?? config('shield-lite.guard', 'web');
 
-        $roleIds = ShieldRole::whereIn('name', $roleNames)
+        // Handle both string and array inputs for compatibility
+        if (is_string($roles)) {
+            $roles = [$roles];
+        }
+
+        if (!is_array($roles)) {
+            $roles = [];
+        }
+
+        $roleIds = ShieldRole::whereIn('name', $roles)
             ->where('guard', $guard)
             ->pluck('id')
             ->toArray();

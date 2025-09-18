@@ -2,7 +2,7 @@
 
 namespace juniyasyos\ShieldLite\Drivers;
 
-use Illuminate\Foundation\Auth\User;
+use Illuminate\Database\Eloquent\Model;
 use juniyasyos\ShieldLite\Contracts\PermissionDriver;
 
 /**
@@ -15,13 +15,16 @@ use juniyasyos\ShieldLite\Contracts\PermissionDriver;
 class ArrayPermissionDriver implements PermissionDriver
 {
     protected array $permissions;
+    protected array $roles = [];
+    protected array $userRoles = [];
+    protected array $userPermissions = [];
 
     public function __construct(?array $permissions = null)
     {
         $this->permissions = $permissions ?? config('shield-lite.permissions', []);
     }
 
-    public function check(User $user, string $ability): bool
+    public function can(Model $user, string $permission, ?string $guard = null): bool
     {
         // Check super admin first
         if ($this->isSuperAdmin($user)) {
@@ -29,17 +32,67 @@ class ArrayPermissionDriver implements PermissionDriver
         }
 
         // Check user-specific permissions
-        if ($this->hasUserPermission($user, $ability)) {
+        if ($this->hasUserPermission($user, $permission)) {
             return true;
         }
 
         // Check role-based permissions if user has roles
-        if ($this->hasRolePermission($user, $ability)) {
+        if ($this->hasRolePermission($user, $permission)) {
             return true;
         }
 
         // Check wildcard permissions
-        if ($this->hasWildcardPermission($user, $ability)) {
+        if ($this->hasWildcardPermission($user, $permission)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function createRole(string $name, ?string $guard = null): mixed
+    {
+        $role = ['name' => $name, 'guard' => $guard ?? 'web', 'permissions' => []];
+        $this->roles[$name] = $role;
+        return $role;
+    }
+
+    public function createPermission(string $name, ?string $guard = null): mixed
+    {
+        $permission = ['name' => $name, 'guard' => $guard ?? 'web'];
+        return $permission;
+    }
+
+    public function assignRole(Model $user, mixed $role): bool
+    {
+        $roleName = is_array($role) ? $role['name'] : $role;
+        $this->userRoles[$user->id][] = $roleName;
+        return true;
+    }
+
+    public function assignPermission(Model $user, mixed $permission): bool
+    {
+        $permissionName = is_array($permission) ? $permission['name'] : $permission;
+        $this->userPermissions[$user->id][] = $permissionName;
+        return true;
+    }
+
+    public function hasRole(Model $user, string $role): bool
+    {
+        return in_array($role, $this->userRoles[$user->id] ?? []);
+    }
+
+    public function hasPermission(Model $user, string $permission): bool
+    {
+        return $this->can($user, $permission);
+    }
+
+    public function assignPermissionToRole(mixed $role, mixed $permission): bool
+    {
+        $roleName = is_array($role) ? $role['name'] : $role;
+        $permissionName = is_array($permission) ? $permission['name'] : $permission;
+
+        if (isset($this->roles[$roleName])) {
+            $this->roles[$roleName]['permissions'][] = $permissionName;
             return true;
         }
 
@@ -73,7 +126,7 @@ class ArrayPermissionDriver implements PermissionDriver
         return array_unique(array_filter($permissions));
     }
 
-    public function getUserPermissions(User $user): array
+    public function getUserPermissions(Model $user): array
     {
         if ($this->isSuperAdmin($user)) {
             return $this->getAvailablePermissions();
@@ -113,7 +166,7 @@ class ArrayPermissionDriver implements PermissionDriver
     /**
      * Check if user has a specific permission directly assigned.
      */
-    protected function hasUserPermission(User $user, string $ability): bool
+    protected function hasUserPermission(Model $user, string $ability): bool
     {
         $userKey = "user.{$user->id}";
 
@@ -128,7 +181,7 @@ class ArrayPermissionDriver implements PermissionDriver
     /**
      * Check if user has permission through their roles.
      */
-    protected function hasRolePermission(User $user, string $ability): bool
+    protected function hasRolePermission(Model $user, string $ability): bool
     {
         if (!method_exists($user, 'getRoleNames')) {
             return false;
@@ -151,7 +204,7 @@ class ArrayPermissionDriver implements PermissionDriver
     /**
      * Check if user has wildcard permissions that match the ability.
      */
-    protected function hasWildcardPermission(User $user, string $ability): bool
+    protected function hasWildcardPermission(Model $user, string $ability): bool
     {
         $userPermissions = $this->getUserPermissions($user);
 
@@ -179,7 +232,7 @@ class ArrayPermissionDriver implements PermissionDriver
     /**
      * Check if user is a super admin.
      */
-    protected function isSuperAdmin(User $user): bool
+    protected function isSuperAdmin(Model $user): bool
     {
         // Check if user has super admin flag
         if (isset($this->permissions["user.{$user->id}.super_admin"]) &&

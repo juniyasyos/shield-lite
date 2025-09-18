@@ -2,7 +2,7 @@
 
 namespace juniyasyos\ShieldLite\Contracts;
 
-use Illuminate\Foundation\Auth\User;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Interface PermissionDriver
@@ -16,38 +16,73 @@ interface PermissionDriver
     /**
      * Check if a user has a specific permission.
      *
-     * @param User $user The user to check permissions for
-     * @param string $ability The normalized ability/permission name
+     * @param Model $user The user to check permissions for
+     * @param string $permission The permission name to check
+     * @param string|null $guard The guard name to use for permission check
      * @return bool True if the user has the permission, false otherwise
      */
-    public function check(User $user, string $ability): bool;
+    public function can(Model $user, string $permission, ?string $guard = null): bool;
 
     /**
-     * Get all permissions available in the system.
+     * Create a new role.
      *
-     * @return array Array of available permission names
+     * @param string $name The role name
+     * @param string|null $guard The guard name
+     * @return mixed The created role object
      */
-    public function getAvailablePermissions(): array;
+    public function createRole(string $name, ?string $guard = null): mixed;
 
     /**
-     * Get all permissions for a specific user.
+     * Create a new permission.
      *
-     * @param User $user The user to get permissions for
-     * @return array Array of permission names the user has
+     * @param string $name The permission name
+     * @param string|null $guard The guard name
+     * @return mixed The created permission object
      */
-    public function getUserPermissions(User $user): array;
+    public function createPermission(string $name, ?string $guard = null): mixed;
 
     /**
-     * Check if the permission system is available and configured.
+     * Assign a role to a user.
      *
-     * @return bool True if the driver is ready to use
+     * @param Model $user The user to assign the role to
+     * @param mixed $role The role to assign (name or object)
+     * @return bool True if successful
      */
-    public function isAvailable(): bool;
+    public function assignRole(Model $user, mixed $role): bool;
 
     /**
-     * Get the driver name/identifier.
+     * Assign a permission to a user.
      *
-     * @return string Driver identifier
+     * @param Model $user The user to assign the permission to
+     * @param mixed $permission The permission to assign (name or object)
+     * @return bool True if successful
      */
-    public function getName(): string;
+    public function assignPermission(Model $user, mixed $permission): bool;
+
+    /**
+     * Check if a user has a specific role.
+     *
+     * @param Model $user The user to check
+     * @param string $role The role name to check
+     * @return bool True if the user has the role
+     */
+    public function hasRole(Model $user, string $role): bool;
+
+    /**
+     * Check if a user has a specific permission.
+     *
+     * @param Model $user The user to check
+     * @param string $permission The permission name to check
+     * @return bool True if the user has the permission
+     */
+    public function hasPermission(Model $user, string $permission): bool;
+
+    /**
+     * Assign a permission to a role.
+     *
+     * @param mixed $role The role to assign the permission to
+     * @param mixed $permission The permission to assign
+     * @return bool True if successful
+     */
+    public function assignPermissionToRole(mixed $role, mixed $permission): bool;
 }

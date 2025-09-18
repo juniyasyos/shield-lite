@@ -13,6 +13,17 @@ use Illuminate\Support\Str;
 class Ability
 {
     /**
+     * Format an action and resource into a permission name.
+     *
+     * Example: format('update', 'posts') -> 'posts.update'
+     */
+    public static function format(string $action, string $resource): string
+    {
+        $format = config('shield-lite.ability_format', '{resource}.{action}');
+        return str_replace(['{resource}', '{action}'], [$resource, $action], $format);
+    }
+
+    /**
      * Normalize an ability name according to the configured format.
      *
      * @param string $resource The resource name (e.g., 'users', 'posts')

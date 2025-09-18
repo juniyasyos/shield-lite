@@ -1,6 +1,31 @@
-# User Resource Stub
+# Shield Lite v4 Stubs
 
-This directory contains example files for implementing a User Resource in your Filament panel. Starting from v2.0, Shield Lite no longer automatically registers a User Resource to avoid tight coupling and give you full control over your user management interface.
+This directory contains example files for implementing Resources in your Filament panel with Shield Lite v4's Spatie-based authorization.
+
+## Prerequisites
+
+Before using these stubs, ensure you have:
+
+1. **Installed Spatie Permission** in your host application:
+   ```bash
+   composer require spatie/laravel-permission:^6
+   php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+   php artisan migrate
+   ```
+
+2. **Added HasRoles trait** to your User model:
+   ```php
+   use Spatie\Permission\Traits\HasRoles;
+   
+   class User extends Authenticatable {
+       use HasRoles;
+   }
+   ```
+
+3. **Published and configured** Shield Lite:
+   ```bash
+   php artisan vendor:publish --tag=shield-lite-config
+   ```
 
 ## How to Use
 
@@ -27,6 +52,30 @@ This directory contains example files for implementing a User Resource in your F
            ]);
    }
    ```
+
+## Permission Structure
+
+The stubs use Shield Lite v4's automatic permission mapping:
+
+- `users.viewAny` - View user list
+- `users.view` - View individual user
+- `users.create` - Create new user  
+- `users.update` - Edit existing user
+- `users.delete` - Delete user
+- `users.restore` - Restore soft-deleted user
+- `users.forceDelete` - Permanently delete user
+
+These permissions are automatically checked via Gate::before logic and Spatie Permission integration.
+
+## Seeding Permissions
+
+Run the Shield Lite seeder to create permissions:
+
+```bash
+php artisan db:seed --class="juniyasyos\ShieldLite\Database\Seeders\ShieldLiteSeeder"
+```
+
+Or configure resources in `config/shield-lite.php` and use the seeder.
 
 4. **Customize as needed** - these are just example files. You can:
    - Add/remove form fields

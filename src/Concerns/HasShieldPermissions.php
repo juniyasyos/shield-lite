@@ -21,7 +21,7 @@ trait HasShieldPermissions
         $normalizedAbility = \juniyasyos\ShieldLite\Support\Ability::normalize($ability, $resource);
 
         // Use the configured permission driver to check permissions
-        return app(PermissionDriver::class)->check($this, $normalizedAbility);
+        return app(PermissionDriver::class)->hasPermission($this, $normalizedAbility);
     }
 
     /**

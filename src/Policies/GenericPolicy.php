@@ -2,154 +2,48 @@
 
 namespace juniyasyos\ShieldLite\Policies;
 
-use Illuminate\Foundation\Auth\User;
+use juniyasyos\ShieldLite\Support\ResourceName;
 use juniyasyos\ShieldLite\Support\Ability;
 use juniyasyos\ShieldLite\Contracts\PermissionDriver;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Generic Policy
  *
- * A dynamic policy that uses magic methods to handle any CRUD operation
- * without needing to define separate methods for each action.
- * This policy integrates with Shield Lite's permission system.
+ * A fallback policy that automatically maps policy methods to Spatie permissions
+ * without boilerplate. Uses magic __call method to handle any policy action.
  */
 class GenericPolicy
 {
-    protected string $resource;
-
-    public function __construct(string $resource)
-    {
-        $this->resource = $resource;
-    }
-
     /**
-     * Magic method to handle all policy method calls.
+     * Handle dynamic policy method calls.
      *
      * @param string $method The policy method name (e.g., 'viewAny', 'create', 'update')
-     * @param array $arguments The method arguments [User $user, ?Model $model]
+     * @param array $args The method arguments [User $user, ?Model $model]
      * @return bool
      */
-    public function __call(string $method, array $arguments): bool
+    public function __call(string $method, array $args): bool
     {
-        /** @var User $user */
-        $user = $arguments[0] ?? null;
-        $model = $arguments[1] ?? null;
+        $user = $args[0] ?? Auth::user();
+        $model = $args[1] ?? null;
 
         if (!$user) {
             return false;
         }
 
-        // Check if user is super admin (bypass all checks)
-        if ($this->isSuperAdmin($user)) {
+        // Check super admin bypass first
+        $superAdminRole = config('shield-lite.super_admin_role', 'Super-Admin');
+        if (method_exists($user, 'hasRole') && $user->hasRole($superAdminRole)) {
             return true;
         }
 
-        // Normalize the ability name
-        $ability = Ability::normalize($method, $this->resource);
+        $resource = $model
+            ? ResourceName::fromModel($model)
+            : 'global';
 
-        // Use the permission driver to check permissions
-        return app(PermissionDriver::class)->check($user, $ability);
-    }
+        $permission = Ability::format($method, $resource);
 
-    /**
-     * Handle viewAny policy check.
-     */
-    public function viewAny(User $user): bool
-    {
-        return $this->__call('viewAny', [$user]);
-    }
-
-    /**
-     * Handle view policy check.
-     */
-    public function view(User $user, $model): bool
-    {
-        return $this->__call('view', [$user, $model]);
-    }
-
-    /**
-     * Handle create policy check.
-     */
-    public function create(User $user): bool
-    {
-        return $this->__call('create', [$user]);
-    }
-
-    /**
-     * Handle update policy check.
-     */
-    public function update(User $user, $model): bool
-    {
-        return $this->__call('update', [$user, $model]);
-    }
-
-    /**
-     * Handle delete policy check.
-     */
-    public function delete(User $user, $model): bool
-    {
-        return $this->__call('delete', [$user, $model]);
-    }
-
-    /**
-     * Handle restore policy check.
-     */
-    public function restore(User $user, $model): bool
-    {
-        return $this->__call('restore', [$user, $model]);
-    }
-
-    /**
-     * Handle forceDelete policy check.
-     */
-    public function forceDelete(User $user, $model): bool
-    {
-        return $this->__call('forceDelete', [$user, $model]);
-    }
-
-    /**
-     * Check if user is a super admin.
-     */
-    protected function isSuperAdmin(User $user): bool
-    {
-        // Check if user has isSuperAdmin method (from HasShieldRoles trait)
-        if (method_exists($user, 'isSuperAdmin')) {
-            return $user->isSuperAdmin();
-        }
-
-        // Check if user has super admin role
-        if (method_exists($user, 'hasRole')) {
-            $superAdminName = config('shield.superadmin.name', 'Super Admin');
-            return $user->hasRole($superAdminName);
-        }
-
-        // Check if configured as superuser with no roles
-        if (config('shield.superuser_if_no_role', false)) {
-            if (method_exists($user, 'getRoleNames')) {
-                return empty($user->getRoleNames());
-            }
-            if (method_exists($user, 'roles')) {
-                return $user->roles()->count() === 0;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Get the resource name this policy handles.
-     */
-    public function getResource(): string
-    {
-        return $this->resource;
-    }
-
-    /**
-     * Set the resource name for this policy.
-     */
-    public function setResource(string $resource): self
-    {
-        $this->resource = $resource;
-        return $this;
+        return app(PermissionDriver::class)
+            ->can($user, $permission, config('shield-lite.guard'));
     }
 }

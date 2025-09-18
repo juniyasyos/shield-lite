@@ -1,23 +1,44 @@
-# Upgrade Guide
+# Upgrade Guide: Shield Lite v3 → v4
 
-This guide will help you migrate from the previous Shield Lite version to the new trait-based architecture.
+Shield Lite v4 introduces a completely new architecture based on Spatie Permission. This guide will help you migrate from v3 to v4.
 
-## From UserResource-based to Trait-based Architecture
+## 🚨 Breaking Changes
 
-### Overview of Changes
+### Major Architectural Changes
 
-The major refactor introduces these key changes:
+- **Spatie Permission Required**: v4 is built on top of Spatie Laravel Permission
+- **No More Array Driver**: The array-based permission system has been removed
+- **Different Configuration**: New config structure focused on Spatie integration
+- **Different Traits**: User model now uses Spatie's `HasRoles` instead of Shield Lite traits
 
-1. **UserResource Removed from Plugin**: No longer ships with a hard-coded UserResource
-2. **Trait-based Integration**: Use traits in your User model instead of depending on plugin resources
-3. **Flexible Permission Drivers**: Choose between Spatie Permission or array-based permissions
-4. **Automatic Policy Resolution**: GenericPolicy with magic methods for CRUD operations
-5. **Configurable Ability Naming**: Flexible ability format configuration
+## 📋 Migration Steps
 
-### Step 1: Update Your Composer Dependencies
+### 1. Backup Your Data
+
+Before upgrading, backup your existing permission data:
+
+```sql
+-- Export existing Shield Lite data
+SELECT * FROM shield_roles;
+SELECT * FROM shield_role_permissions; 
+SELECT * FROM model_has_permissions;
+-- etc.
+```
+
+### 2. Install Spatie Permission
 
 ```bash
-composer update juniyasyos/shield-lite
+composer require spatie/laravel-permission:^6
+php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
+php artisan migrate
+```
+
+### 3. Update Composer Dependencies
+
+```bash
+composer require juniyasyos/shield-lite:^4.0
+composer remove spatie/laravel-permission # if you had old version
+composer require spatie/laravel-permission:^6
 ```
 
 ### Step 2: Move UserResource to Your App

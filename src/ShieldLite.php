@@ -21,15 +21,17 @@ class ShieldLite implements Plugin
 
     public function register(Panel $panel): void
     {
+        // Skip resource registration for now to avoid errors
+        // TODO: Fix resource registration issues
+        /*
         // Only register Role resource - User resource should be implemented by the app
-        $resources = [];
         if (config('shield.register_resources.roles', true)) {
-            $resources[] = config('shield.resources.roles', \juniyasyos\ShieldLite\Resources\Roles\RoleResource::class);
+            $roleResource = config('shield.resources.roles', \juniyasyos\ShieldLite\Resources\Roles\RoleResource::class);
+            $panel->resources(
+                $roleResource
+            );
         }
-
-        if (! empty($resources)) {
-            $panel->resources($resources);
-        }
+        */
     }
 
     public function boot(Panel $panel): void

@@ -46,15 +46,9 @@ class ShieldLiteServiceProvider extends ServiceProvider
      */
     protected function registerPermissionDriver(): void
     {
-        $this->app->singleton(PermissionDriver::class, function ($app) {
-            $driver = config('shield-lite.driver', 'spatie');
-
-            return match ($driver) {
-                'spatie' => new SpatiePermissionDriver(),
-                'array' => new ArrayPermissionDriver(),
-                default => new SpatiePermissionDriver(),
-            };
-        });
+        $this->app->singleton(PermissionDriver::class,
+            fn () => new SpatiePermissionDriver()
+        );
     }
 
     /**
@@ -62,16 +56,30 @@ class ShieldLiteServiceProvider extends ServiceProvider
      */
     protected function registerGates(): void
     {
-        Gate::before(function ($user, $ability) {
-            // Check if user is super admin
-            if ($this->isSuperAdmin($user)) {
+        Gate::before(function ($user, string $ability, ?array $arguments = null) {
+            // 1) Super-admin global allow (konfigurable nama rolenya)
+            $role = config('shield-lite.super_admin_role', 'Super-Admin');
+            // pakai Spatie langsung, JANGAN $user->can() agar tidak rekursif
+            if (method_exists($user, 'hasRole') && $user->hasRole($role)) {
                 return true;
             }
 
-            // Use the configured permission driver
-            $driver = app(PermissionDriver::class);
+            // 2) Default mapping: action on Model → permission "{resource}.{action}"
+            // ex: update(Post::class) → "posts.update"
+            if (!empty($arguments) && isset($arguments[0])) {
+                $resource = \juniyasyos\ShieldLite\Support\ResourceName::fromModel($arguments[0]);
+                $permission = \juniyasyos\ShieldLite\Support\Ability::format($ability, $resource);
+                if (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo($permission, config('shield-lite.guard'))) {
+                    return true; // izinkan
+                }
+            }
 
-            return $driver->check($user, $ability);
+            return null; // biarkan policy lain berjalan jika ada
+        });
+
+        // 3) (Opsional) Custom policy discovery kalau mau fallback otomatis
+        Gate::guessPolicyNamesUsing(function (string $modelClass) {
+            return \juniyasyos\ShieldLite\Policies\GenericPolicy::class;
         });
     }
 
@@ -167,6 +175,11 @@ class ShieldLiteServiceProvider extends ServiceProvider
                 ? lang_path('vendor/shield')
                 : resource_path('lang/vendor/shield'),
         ], 'shield-translations');
+
+        // Publish test files for development and integration testing
+        $this->publishes([
+            __DIR__ . '/../tests/Feature' => base_path('tests/Feature/ShieldLite'),
+        ], 'shield-tests');
     }
 
     protected function registerView()

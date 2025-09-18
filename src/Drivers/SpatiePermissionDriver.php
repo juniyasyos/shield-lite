@@ -2,158 +2,86 @@
 
 namespace juniyasyos\ShieldLite\Drivers;
 
-use Illuminate\Foundation\Auth\User;
+use Illuminate\Database\Eloquent\Model;
 use juniyasyos\ShieldLite\Contracts\PermissionDriver;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 /**
  * Spatie Permission Driver
  *
  * Integrates Shield Lite with the Spatie Laravel Permission package.
- * This driver checks if Spatie Permission is available and uses it for permission checks.
+ * This driver uses Spatie Permission directly for permission checks.
  */
-class SpatiePermissionDriver implements PermissionDriver
+final class SpatiePermissionDriver implements PermissionDriver
 {
-    public function check(User $user, string $ability): bool
+    public function can(Model $user, string $permission, ?string $guard = null): bool
     {
-        if (!$this->isAvailable()) {
+        // Gunakan Spatie langsung (hindari Gate recursion)
+        if (!method_exists($user, 'hasPermissionTo')) {
             return false;
         }
 
-        // Check if user has the permission directly
-        if (method_exists($user, 'can') && $user->can($ability)) {
-            return true;
-        }
-
-        // Check if user has permission through hasPermissionTo method
-        if (method_exists($user, 'hasPermissionTo')) {
-            try {
-                return $user->hasPermissionTo($ability);
-            } catch (\Exception $e) {
-                // Permission might not exist in Spatie system
-                return false;
-            }
-        }
-
-        return false;
+        return $user->hasPermissionTo($permission, $guard ?? config('shield-lite.guard'));
     }
 
-    public function getAvailablePermissions(): array
+    public function createRole(string $name, ?string $guard = null): mixed
     {
-        if (!$this->isAvailable()) {
-            return [];
-        }
-
-        // Try to get permissions from Spatie Permission model
-        try {
-            $permissionModel = config('permission.models.permission');
-            if (class_exists($permissionModel)) {
-                return $permissionModel::pluck('name')->toArray();
-            }
-        } catch (\Exception $e) {
-            // Spatie not configured properly
-        }
-
-        return [];
+        return Role::create([
+            'name' => $name,
+            'guard_name' => $guard ?? config('shield-lite.guard', 'web'),
+        ]);
     }
 
-    public function getUserPermissions(User $user): array
+    public function createPermission(string $name, ?string $guard = null): mixed
     {
-        if (!$this->isAvailable()) {
-            return [];
-        }
-
-        $permissions = [];
-
-        // Get direct permissions
-        if (method_exists($user, 'getDirectPermissions')) {
-            $directPermissions = $user->getDirectPermissions()->pluck('name')->toArray();
-            $permissions = array_merge($permissions, $directPermissions);
-        }
-
-        // Get permissions via roles
-        if (method_exists($user, 'getPermissionsViaRoles')) {
-            $rolePermissions = $user->getPermissionsViaRoles()->pluck('name')->toArray();
-            $permissions = array_merge($permissions, $rolePermissions);
-        }
-
-        // Fallback: get all permissions if user has getAllPermissions method
-        if (method_exists($user, 'getAllPermissions')) {
-            $allPermissions = $user->getAllPermissions()->pluck('name')->toArray();
-            $permissions = array_merge($permissions, $allPermissions);
-        }
-
-        return array_unique($permissions);
+        return Permission::create([
+            'name' => $name,
+            'guard_name' => $guard ?? config('shield-lite.guard', 'web'),
+        ]);
     }
 
-    public function isAvailable(): bool
+    public function assignRole(Model $user, mixed $role): bool
     {
-        // Check if Spatie Permission package is installed
-        if (!trait_exists(\Spatie\Permission\Traits\HasPermissions::class)) {
+        if (!method_exists($user, 'assignRole')) {
             return false;
         }
 
-        if (!trait_exists(\Spatie\Permission\Traits\HasRoles::class)) {
-            return false;
-        }
-
-        // Check if permission config exists
-        if (!config('permission')) {
-            return false;
-        }
-
+        $user->assignRole($role);
         return true;
     }
 
-    public function getName(): string
+    public function assignPermission(Model $user, mixed $permission): bool
     {
-        return 'spatie';
-    }
-
-    /**
-     * Create or find a permission in Spatie Permission system.
-     */
-    public function createPermissionIfNotExists(string $permissionName, ?string $guard = null): bool
-    {
-        if (!$this->isAvailable()) {
+        if (!method_exists($user, 'givePermissionTo')) {
             return false;
         }
 
-        try {
-            $permissionModel = config('permission.models.permission');
-            $guard = $guard ?? config('auth.defaults.guard');
-
-            if (class_exists($permissionModel)) {
-                $permissionModel::firstOrCreate([
-                    'name' => $permissionName,
-                    'guard_name' => $guard,
-                ]);
-                return true;
-            }
-        } catch (\Exception $e) {
-            // Could not create permission
-        }
-
-        return false;
+        $user->givePermissionTo($permission);
+        return true;
     }
 
-    /**
-     * Sync Shield Lite permissions with Spatie Permission system.
-     */
-    public function syncPermissions(array $permissions, ?string $guard = null): bool
+    public function hasRole(Model $user, string $role): bool
     {
-        if (!$this->isAvailable()) {
+        if (!method_exists($user, 'hasRole')) {
             return false;
         }
 
-        $guard = $guard ?? config('auth.defaults.guard');
-        $created = 0;
+        return $user->hasRole($role);
+    }
 
-        foreach ($permissions as $permission) {
-            if ($this->createPermissionIfNotExists($permission, $guard)) {
-                $created++;
-            }
+    public function hasPermission(Model $user, string $permission): bool
+    {
+        return $this->can($user, $permission);
+    }
+
+    public function assignPermissionToRole(mixed $role, mixed $permission): bool
+    {
+        if (!method_exists($role, 'givePermissionTo')) {
+            return false;
         }
 
-        return $created > 0;
+        $role->givePermissionTo($permission);
+        return true;
     }
 }
