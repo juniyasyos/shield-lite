@@ -33,7 +33,16 @@
             "email": "juniyasyos@gmail.com"
         }
     ],
-    "require": {},
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "spatie/laravel-permission": "^6.0"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "orchestra/testbench": "^9.0|^10.0|^11.0"
+    },
     "extra": {
         "branch-alias": {
             "dev-main": "2.x-dev"
@@ -43,5 +52,8 @@
                 "juniyasyos\\ShieldLite\\ShieldLiteServiceProvider"
             ]
         }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest"
     }
 }
