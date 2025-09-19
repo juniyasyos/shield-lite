@@ -83,7 +83,7 @@ trait HasShieldLite
         if (!$user) return false;
 
         // Super admin bypass
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+        if (method_exists($user, 'isSuperAdmin') && call_user_func([$user, 'isSuperAdmin'])) {
             return true;
         }
 
@@ -95,7 +95,7 @@ trait HasShieldLite
         foreach ($gates as $permission => $description) {
             foreach ($keywords as $keyword) {
                 if (str_contains(strtolower($permission), strtolower($keyword))) {
-                    if ($user->can($permission)) {
+                    if (Auth::user()->can($permission)) {
                         return true;
                     }
                 }
@@ -103,5 +103,20 @@ trait HasShieldLite
         }
 
         return true; // Default allow if no specific permission found
+    }
+
+    /**
+     * Public method to check specific permission (for testing and external use)
+     */
+    public function checkSpecificPermission($user, string $permission): bool
+    {
+        if (!$user) return false;
+
+        // Super admin bypass
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
+        return $user->can($permission);
     }
 }
