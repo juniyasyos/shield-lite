@@ -37,6 +37,9 @@ class ShieldLiteServiceProvider extends ServiceProvider
             $this->commands([
                 ShieldPublishCommand::class,
                 \juniyasyos\ShieldLite\Console\ShieldGenerateCommand::class,
+                \juniyasyos\ShieldLite\Commands\InstallCommand::class,
+                \juniyasyos\ShieldLite\Commands\CreateUserCommand::class,
+                \juniyasyos\ShieldLite\Commands\CreateRoleCommand::class,
             ]);
         }
     }
