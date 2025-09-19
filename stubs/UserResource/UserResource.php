@@ -15,7 +15,7 @@ use Filament\Actions\BulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use juniyasyos\ShieldLite\HasShieldLite;
-use juniyasyos\ShieldLite\Models\ShieldRole;
+use Spatie\Permission\Models\Role;
 use Illuminate\Support\Collection;
 
 class UserResource extends Resource
@@ -101,7 +101,7 @@ class UserResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Select::make('default_role_id')
                     ->label(__('Default Role'))
-                    ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
+                    ->options(fn () => Role::query()->pluck('name', 'id'))
                     ->helperText(__('Used as default role indicator for the user'))
                     ->columnSpanFull(),
             ]);
@@ -127,14 +127,14 @@ class UserResource extends Resource
                     ->form([
                         Forms\Components\Select::make('roles')
                             ->label(__('Roles'))
-                            ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
+                            ->options(fn () => Role::query()->pluck('name', 'id'))
                             ->multiple()
                             ->required()
                             ->preload()
                             ->searchable(),
                         Forms\Components\Select::make('default_role_id')
                             ->label(__('Default Role'))
-                            ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
+                            ->options(fn () => Role::query()->pluck('name', 'id'))
                             ->searchable(),
                     ])
                     ->fillForm(fn (User $record) => [
@@ -157,14 +157,14 @@ class UserResource extends Resource
                     ->form([
                         Forms\Components\Select::make('roles')
                             ->label(__('Roles'))
-                            ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
+                            ->options(fn () => Role::query()->pluck('name', 'id'))
                             ->multiple()
                             ->required()
                             ->preload()
                             ->searchable(),
                         Forms\Components\Select::make('default_role_id')
                             ->label(__('Default Role'))
-                            ->options(fn () => ShieldRole::query()->pluck('name', 'id'))
+                            ->options(fn () => Role::query()->pluck('name', 'id'))
                             ->searchable(),
                     ])
                     ->action(function (Collection $records, array $data) {

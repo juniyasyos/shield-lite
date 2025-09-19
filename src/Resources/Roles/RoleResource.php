@@ -9,7 +9,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use juniyasyos\ShieldLite\HasShieldLite;
-use juniyasyos\ShieldLite\Models\ShieldRole;
+use Spatie\Permission\Models\Role;
 use juniyasyos\ShieldLite\Resources\Roles\Pages\CreateRole;
 use juniyasyos\ShieldLite\Resources\Roles\Pages\EditRole;
 use juniyasyos\ShieldLite\Resources\Roles\Pages\ListRoles;
@@ -22,7 +22,7 @@ class RoleResource extends Resource
 
     public static function getModel(): string
     {
-        return config('shield.models.role', ShieldRole::class);
+        return config('permission.models.role', Role::class);
     }
 
     protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedLockClosed;

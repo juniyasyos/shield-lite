@@ -20,6 +20,21 @@ trait HasShieldLite
     }
 
     /**
+     * Get role name for permission generation
+     * Auto-derived from class name if not overridden
+     */
+    public function roleName(): string
+    {
+        $class = class_basename(static::class);
+
+        // Remove "Resource" suffix if present
+        $name = str_replace('Resource', '', $class);
+
+        // Convert PascalCase to lowercase
+        return strtolower($name);
+    }
+
+    /**
      * Auto register permissions when resource is loaded
      */
     public static function bootHasShieldLite()

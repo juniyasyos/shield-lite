@@ -6,7 +6,8 @@ use Filament\Facades\Filament;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use juniyasyos\ShieldLite\Models\ShieldRole;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use juniyasyos\ShieldLite\ShieldLite;
 
 class ShieldGenerateCommand extends Command
@@ -166,15 +167,22 @@ class ShieldGenerateCommand extends Command
         $guard = config('shield.superadmin.guard', 'web');
 
         $gates = array_values(array_unique($gates));
-        $access = [$gates];
 
-        ShieldRole::query()->updateOrCreate(
-            ['name' => $name, 'guard' => $guard],
-            [
-                'created_by_name' => 'system',
-                'access' => $access,
-            ]
+        // Create or update role
+        $role = Role::query()->updateOrCreate(
+            ['name' => $name, 'guard_name' => $guard]
         );
+
+        // Create all permissions if they don't exist
+        foreach ($gates as $gate) {
+            Permission::firstOrCreate([
+                'name' => $gate,
+                'guard_name' => $guard
+            ]);
+        }
+
+        // Sync all permissions to the role
+        $role->syncPermissions($gates);
 
         $this->info("Super Admin role synced with ".count($gates)." permissions.");
     }

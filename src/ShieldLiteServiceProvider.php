@@ -18,6 +18,34 @@ class ShieldLiteServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerPermissionDriver();
+        $this->registerServices();
+        $this->registerLogChannel();
+    }
+
+    /**
+     * Register Shield Lite services
+     */
+    protected function registerServices(): void
+    {
+        $this->app->bind(
+            \juniyasyos\ShieldLite\Services\Contracts\RoleServiceInterface::class,
+            \juniyasyos\ShieldLite\Services\RoleService::class
+        );
+
+        $this->app->singleton(\juniyasyos\ShieldLite\Services\RoleService::class);
+    }
+
+    /**
+     * Register custom log channel for Shield Lite
+     */
+    protected function registerLogChannel(): void
+    {
+        $this->app->make('config')->set('logging.channels.shield-lite', [
+            'driver' => 'daily',
+            'path' => storage_path('logs/shield-lite.log'),
+            'level' => env('SHIELD_LITE_LOG_LEVEL', 'debug'),
+            'days' => 14,
+        ]);
     }
 
     /**
@@ -37,6 +65,7 @@ class ShieldLiteServiceProvider extends ServiceProvider
             $this->commands([
                 ShieldPublishCommand::class,
                 \juniyasyos\ShieldLite\Console\ShieldGenerateCommand::class,
+                \juniyasyos\ShieldLite\Console\ShieldDebugCommand::class,
                 \juniyasyos\ShieldLite\Commands\InstallCommand::class,
                 \juniyasyos\ShieldLite\Commands\CreateUserCommand::class,
                 \juniyasyos\ShieldLite\Commands\CreateRoleCommand::class,

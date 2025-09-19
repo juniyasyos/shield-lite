@@ -87,7 +87,7 @@ trait GateTrait
 
         $collections = $this->callGates($panel)
             ->map(function (array $item) {
-                return collect(app($item['class'])->gateIndexes());
+                return collect(array_keys(app($item['class'])->defineGates()));
             })
             ->toArray();
         $gates = [];
@@ -123,7 +123,7 @@ trait GateTrait
     {
         collect($this->callGates($panel))
             ->map(function (array $item) {
-                return collect(app($item['class'])->gateIndexes());
+                return collect(array_keys(app($item['class'])->defineGates()));
             })
             ->each(function ($gates) use ($panel) {
                 collect($gates)

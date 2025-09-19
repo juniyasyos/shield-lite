@@ -14,14 +14,17 @@ class RolesTable
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn($query) => $query->where('guard', shield()->guard()))
+            ->modifyQueryUsing(fn($query) => $query->where('guard_name', shield()->guard()))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
                     ->label(__('Role Name')),
-                TextColumn::make('created_by_name')
-                    ->searchable()
-                    ->label(__('Crated By')),
+                TextColumn::make('permissions_count')
+                    ->counts('permissions')
+                    ->label(__('Permissions')),
+                TextColumn::make('users_count')
+                    ->counts('users')
+                    ->label(__('Users')),
                 TextColumn::make('created_at')
                     ->sortable()
                     ->dateTime('d/m/y H:i'),
