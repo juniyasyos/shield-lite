@@ -3,17 +3,16 @@
 namespace juniyasyos\ShieldLite\Concerns;
 
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Permission;
 
 /**
- * Trait HasShieldLite
- *
- * Provides authorization functionality for Filament Resources using Shield Lite
+ * Simple trait for Filament Resources
  */
 trait HasShieldLite
 {
     /**
-     * Define the gates/permissions for this resource.
-     * Override this method in your Resource to define custom permissions.
+     * Define permissions for this resource
+     * Override this in your Resource
      */
     public function defineGates(): array
     {
@@ -21,140 +20,17 @@ trait HasShieldLite
     }
 
     /**
-     * Check if the current user can access this resource
+     * Auto register permissions when resource is loaded
      */
-    public static function canAccess(): bool
+    public static function bootHasShieldLite()
     {
-        $user = Auth::user();
-        if (!$user) return false;
-
-        // Check if user is super admin
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
-            return true;
+        if (config('shield-lite.auto_register', true)) {
+            static::registerGates();
         }
-
-        // Get the resource instance to access defineGates
-        $instance = new static();
-        $gates = $instance->defineGates();
-
-        // Look for viewAny permission
-        $viewAnyPermissions = array_keys(array_filter($gates, function($key) {
-            return str_contains(strtolower($key), 'viewany') || str_contains(strtolower($key), 'index');
-        }, ARRAY_FILTER_USE_KEY));
-
-        if (empty($viewAnyPermissions)) {
-            return true; // Default allow if no specific permission defined
-        }
-
-        // Check if user has any of the viewAny permissions
-        foreach ($viewAnyPermissions as $permission) {
-            if (method_exists($user, 'can') && $user->can($permission)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
-     * Check if the current user can create records
-     */
-    public static function canCreate(): bool
-    {
-        $user = Auth::user();
-        if (!$user) return false;
-
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
-            return true;
-        }
-
-        $instance = new static();
-        $gates = $instance->defineGates();
-
-        $createPermissions = array_keys(array_filter($gates, function($key) {
-            return str_contains(strtolower($key), 'create');
-        }, ARRAY_FILTER_USE_KEY));
-
-        if (empty($createPermissions)) {
-            return true;
-        }
-
-        foreach ($createPermissions as $permission) {
-            if (method_exists($user, 'can') && $user->can($permission)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if the current user can edit/update records
-     */
-    public static function canEdit($record): bool
-    {
-        $user = Auth::user();
-        if (!$user) return false;
-
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
-            return true;
-        }
-
-        $instance = new static();
-        $gates = $instance->defineGates();
-
-        $updatePermissions = array_keys(array_filter($gates, function($key) {
-            return str_contains(strtolower($key), 'update') || str_contains(strtolower($key), 'edit');
-        }, ARRAY_FILTER_USE_KEY));
-
-        if (empty($updatePermissions)) {
-            return true;
-        }
-
-        foreach ($updatePermissions as $permission) {
-            if (method_exists($user, 'can') && $user->can($permission)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Check if the current user can delete records
-     */
-    public static function canDelete($record): bool
-    {
-        $user = Auth::user();
-        if (!$user) return false;
-
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
-            return true;
-        }
-
-        $instance = new static();
-        $gates = $instance->defineGates();
-
-        $deletePermissions = array_keys(array_filter($gates, function($key) {
-            return str_contains(strtolower($key), 'delete');
-        }, ARRAY_FILTER_USE_KEY));
-
-        if (empty($deletePermissions)) {
-            return true;
-        }
-
-        foreach ($deletePermissions as $permission) {
-            if (method_exists($user, 'can') && $user->can($permission)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Register the gates defined in defineGates() method
-     * This should be called from a service provider
+     * Register all permissions defined in defineGates()
      */
     public static function registerGates(): void
     {
@@ -162,10 +38,70 @@ trait HasShieldLite
         $gates = $instance->defineGates();
 
         foreach ($gates as $permission => $description) {
-            // Ensure permission exists in the database
-            if (class_exists('Spatie\\Permission\\Models\\Permission')) {
-                \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
+            Permission::findOrCreate($permission, config('shield-lite.guard', 'web'));
+        }
+    }
+
+    /**
+     * Check if user can access this resource
+     */
+    public static function canAccess(): bool
+    {
+        return static::checkPermission(['viewAny', 'index']);
+    }
+
+    /**
+     * Check if user can create records
+     */
+    public static function canCreate(): bool
+    {
+        return static::checkPermission(['create']);
+    }
+
+    /**
+     * Check if user can edit records
+     */
+    public static function canEdit($record): bool
+    {
+        return static::checkPermission(['update', 'edit']);
+    }
+
+    /**
+     * Check if user can delete records
+     */
+    public static function canDelete($record): bool
+    {
+        return static::checkPermission(['delete']);
+    }
+
+    /**
+     * Helper method to check permissions
+     */
+    protected static function checkPermission(array $keywords): bool
+    {
+        $user = Auth::user();
+        if (!$user) return false;
+
+        // Super admin bypass
+        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
+            return true;
+        }
+
+        // Get permissions from defineGates
+        $instance = new static();
+        $gates = $instance->defineGates();
+
+        // Find matching permissions
+        foreach ($gates as $permission => $description) {
+            foreach ($keywords as $keyword) {
+                if (str_contains(strtolower($permission), strtolower($keyword))) {
+                    if ($user->can($permission)) {
+                        return true;
+                    }
+                }
             }
         }
+
+        return true; // Default allow if no specific permission found
     }
 }
