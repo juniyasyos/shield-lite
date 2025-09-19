@@ -108,20 +108,14 @@ trait HasShieldRoles
 
     /**
      * Assign a role to the user.
-     * Compatible with Spatie Permission signature: assignRole($roles)
+     * Compatible with Spatie Permission signature: assignRole(...$roles)
      */
-    public function assignRole($roles, ?string $guard = null): self
+    public function assignRole(...$roles): self
     {
-        $guard = $guard ?? config('shield-lite.guard', 'web');
+        $guard = config('shield-lite.guard', 'web');
 
-        // Handle both string and array inputs for compatibility
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
-
-        if (!is_array($roles)) {
-            return $this;
-        }
+        // Flatten roles array (variadic parameters come as array)
+        $roles = collect($roles)->flatten()->toArray();
 
         foreach ($roles as $roleName) {
             $role = ShieldRole::where('name', $roleName)
@@ -138,20 +132,14 @@ trait HasShieldRoles
 
     /**
      * Remove a role from the user.
-     * Compatible with Spatie Permission signature: removeRole($roles)
+     * Compatible with Spatie Permission signature: removeRole(...$role)
      */
-    public function removeRole($roles, ?string $guard = null): self
+    public function removeRole(...$role): self
     {
-        $guard = $guard ?? config('shield-lite.guard', 'web');
+        $guard = config('shield-lite.guard', 'web');
 
-        // Handle both string and array inputs for compatibility
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
-
-        if (!is_array($roles)) {
-            return $this;
-        }
+        // Flatten roles array (variadic parameters come as array)
+        $roles = collect($role)->flatten()->toArray();
 
         foreach ($roles as $roleName) {
             $role = ShieldRole::where('name', $roleName)
@@ -168,20 +156,14 @@ trait HasShieldRoles
 
     /**
      * Sync roles for the user.
-     * Compatible with Spatie Permission signature: syncRoles($roles)
+     * Compatible with Spatie Permission signature: syncRoles(...$roles)
      */
-    public function syncRoles($roles, ?string $guard = null): self
+    public function syncRoles(...$roles): self
     {
-        $guard = $guard ?? config('shield-lite.guard', 'web');
+        $guard = config('shield-lite.guard', 'web');
 
-        // Handle both string and array inputs for compatibility
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
-
-        if (!is_array($roles)) {
-            $roles = [];
-        }
+        // Flatten roles array (variadic parameters come as array)
+        $roles = collect($roles)->flatten()->toArray();
 
         $roleIds = ShieldRole::whereIn('name', $roles)
             ->where('guard', $guard)
@@ -195,15 +177,15 @@ trait HasShieldRoles
 
     /**
      * Get all role names for the user.
+     * Compatible with Spatie Permission signature: getRoleNames(): Collection
      */
-    public function getRoleNames(?string $guard = null): array
+    public function getRoleNames(): Collection
     {
-        $guard = $guard ?? config('shield-lite.guard', 'web');
+        $guard = config('shield-lite.guard', 'web');
 
         return $this->roles()
             ->where('guard', $guard)
-            ->pluck('name')
-            ->toArray();
+            ->pluck('name');
     }
 
     /**

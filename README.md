@@ -1,43 +1,37 @@
-# Shield Lite v4 - Spatie-Based Authorization
+# Shield Lite - Laravel Authorization Made Easy
 
-A modern Laravel authorization package that leverages Spatie Permission for robust role and permission management. Zero boilerplate, maximum power.
+🛡️ A lightweight, powerful Laravel authorization package built on top of Spatie Permission with seamless Filament integration.
 
 [![Latest Stable Version](https://poser.pugx.org/juniyasyos/shield-lite/v/stable)](https://packagist.org/packages/juniyasyos/shield-lite)
 [![Total Downloads](https://poser.pugx.org/juniyasyos/shield-lite/downloads)](https://packagist.org/packages/juniyasyos/shield-lite)
 [![License](https://poser.pugx.org/juniyasyos/shield-lite/license)](https://packagist.org/packages/juniyasyos/shield-lite)
 
-## 🚀 Features
+## ✨ Features
 
-- **🔗 Spatie Permission Integration**: Built on top of the proven Spatie Laravel Permission package
-- **⚡ Zero Boilerplate**: Automatic policy methods with magic `__call` - no manual policy writing needed
-- **🛡️ Gate::before Integration**: Super-admin bypass and automatic resource→permission mapping
-- **⚙️ Highly Configurable**: Flexible permission naming, guard support, teams support (optional)
-- **🏗️ Laravel Native**: Works with `$user->can()`, `@can` Blade directives, and all Laravel authorization
-- **🚄 Cache-Aware**: Automatic permission cache management with Spatie's robust caching
-- **🎯 Filament Ready**: Seamless integration with Filament admin panels
+- 🔗 **Spatie Permission Compatible** - Built on proven Spatie Laravel Permission
+- ⚡ **Zero Configuration** - Works out of the box with sensible defaults
+- 🛡️ **Super Admin Support** - Automatic bypass for super administrators
+- 🎯 **Filament Ready** - Seamless integration with Filament Resources
+- 🔄 **Trait Compatibility** - Full compatibility with existing Spatie Permission traits
+- 🚀 **Easy Resource Authorization** - Simple `defineGates()` pattern like Hexa Lite
+- 📊 **Flexible Drivers** - Support for database and array drivers
 
-## 📋 Table of Contents
+## 📦 Installation
 
-- [Installation & Setup](#installation--setup)
-- [Core Concepts](#core-concepts)
-- [Helper Classes](#helper-classes)
-- [Traits & Integration](#traits--integration)
-- [Usage Examples](#usage-examples)
-- [Advanced Configuration](#advanced-configuration)
-- [Filament Integration](#filament-integration)
-- [Testing](#testing)
+### Step 1: Install Spatie Permission
 
-## 🔧 Installation & Setup
-
-### Step 1: Install Spatie Permission (Required)
-
-First, install Spatie Permission in your host application:
+Shield Lite requires Spatie Permission as the foundation:
 
 ```bash
+# Install Spatie Permission
 composer require spatie/laravel-permission:^6
+
+# Publish and run migrations
 php artisan vendor:publish --provider="Spatie\Permission\PermissionServiceProvider"
-php artisan optimize:clear
 php artisan migrate
+
+# Clear cache
+php artisan optimize:clear
 ```
 
 ### Step 2: Install Shield Lite
@@ -46,7 +40,328 @@ php artisan migrate
 composer require juniyasyos/shield-lite
 ```
 
-### Step 3: Configure User Model
+### Step 3: Publish Configuration (Optional)
+
+```bash
+php artisan vendor:publish --tag="shield-lite-config"
+```
+
+## 🔧 Quick Setup
+
+### 1. Configure User Model
+
+Add Shield Lite traits to your User model:
+
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Spatie\Permission\Traits\HasRoles;
+use juniyasyos\ShieldLite\Concerns\HasShieldRoles;
+use juniyasyos\ShieldLite\Concerns\HasShieldPermissions;
+use juniyasyos\ShieldLite\Concerns\AuthorizesShield;
+
+class User extends Authenticatable
+{
+    use HasShieldRoles, HasShieldPermissions, AuthorizesShield;
+    use HasRoles {
+        // Use Spatie methods as primary, Shield Lite as aliases
+        HasRoles::assignRole insteadof HasShieldRoles;
+        HasRoles::removeRole insteadof HasShieldRoles;
+        HasRoles::hasRole insteadof HasShieldRoles;
+        HasRoles::syncRoles insteadof HasShieldRoles;
+        HasRoles::getRoleNames insteadof HasShieldRoles;
+        
+        // Keep Shield Lite specific methods
+        HasShieldRoles::isSuperAdmin as isShieldSuperAdmin;
+        HasShieldRoles::getDefaultRole as getShieldDefaultRole;
+    }
+
+    // Your model code...
+}
+```
+
+### 2. Configure Filament Resources
+
+Use the `HasShieldLite` trait in your Filament Resources:
+
+```php
+<?php
+
+namespace App\Filament\Resources;
+
+use Filament\Resources\Resource;
+use juniyasyos\ShieldLite\Concerns\HasShieldLite;
+
+class UserResource extends Resource
+{
+    use HasShieldLite;
+
+    protected static ?string $model = User::class;
+
+    /**
+     * Define permissions for this resource
+     */
+    public function defineGates(): array
+    {
+        return [
+            'users.viewAny' => __('View users list'),
+            'users.create' => __('Create new users'),
+            'users.update' => __('Update users'),
+            'users.delete' => __('Delete users'),
+        ];
+    }
+
+    // Your resource code...
+}
+```
+
+## 📚 Usage Examples
+
+### Basic Role & Permission Management
+
+```php
+// Create roles and permissions
+$adminRole = \Spatie\Permission\Models\Role::create(['name' => 'admin']);
+$permission = \Spatie\Permission\Models\Permission::create(['name' => 'users.viewAny']);
+
+// Assign role to user
+$user = User::find(1);
+$user->assignRole('admin');
+
+// Check permissions (all of these work)
+$user->can('users.viewAny');           // Laravel native
+$user->hasRole('admin');               // Spatie method
+$user->isShieldSuperAdmin();           // Shield Lite method
+```
+
+### Super Admin Setup
+
+```php
+// Create super admin role
+$superAdminRole = \Spatie\Permission\Models\Role::create(['name' => 'Super-Admin']);
+
+// Assign to user
+$user->assignRole('Super-Admin');
+
+// Super admin bypasses ALL permission checks automatically
+$user->can('any.permission.here'); // Always true for super admin
+```
+
+### Filament Resource Authorization
+
+With `HasShieldLite` trait, your resources automatically get proper authorization:
+
+```php
+class PostResource extends Resource
+{
+    use HasShieldLite;
+
+    public function defineGates(): array
+    {
+        return [
+            'posts.viewAny' => __('View posts'),
+            'posts.create' => __('Create posts'), 
+            'posts.update' => __('Edit posts'),
+            'posts.delete' => __('Delete posts'),
+        ];
+    }
+}
+```
+
+The trait automatically provides:
+- ✅ `canAccess()` - checks `viewAny` permission
+- ✅ `canCreate()` - checks `create` permission  
+- ✅ `canEdit($record)` - checks `update` permission
+- ✅ `canDelete($record)` - checks `delete` permission
+- ✅ Auto permission registration in database
+
+### Manual Permission Checking
+
+```php
+// In controllers
+if ($user->can('posts.create')) {
+    // User can create posts
+}
+
+// In Blade templates
+@can('posts.update', $post)
+    <a href="{{ route('posts.edit', $post) }}">Edit</a>
+@endcan
+
+// Using Gates
+if (Gate::allows('posts.delete', $post)) {
+    // User can delete this post
+}
+```
+
+## ⚙️ Configuration
+
+### Configuration File
+
+```php
+// config/shield-lite.php
+return [
+    'driver' => env('SHIELD_LITE_DRIVER', 'spatie'), // 'spatie' or 'array'
+    'guard' => env('SHIELD_LITE_GUARD', 'web'),
+    'super_admin_roles' => ['Super-Admin'],
+    'cache_key' => 'shield_lite_permissions',
+    'cache_expiration' => 3600, // 1 hour
+];
+```
+
+### Environment Variables
+
+```env
+SHIELD_LITE_DRIVER=spatie
+SHIELD_LITE_GUARD=web
+```
+
+## 🧪 Testing
+
+### Test Setup
+
+For testing, register gates before running tests:
+
+```php
+// In your test
+test('user can access dashboard', function () {
+    // Register resource gates
+    \App\Filament\Resources\UserResource::registerGates();
+    
+    $user = User::factory()->create();
+    $user->assignRole('admin');
+    
+    $this->actingAs($user)
+         ->get('/admin')
+         ->assertStatus(200);
+});
+```
+
+### Test Helpers
+
+```php
+// Create test user with permissions
+$user = User::factory()->create();
+$user->givePermissionTo('users.viewAny');
+
+// Or assign role
+$user->assignRole('admin');
+
+// Test permissions
+expect($user->can('users.viewAny'))->toBeTrue();
+expect($user->hasRole('admin'))->toBeTrue();
+```
+
+## 🔄 Migration from Other Packages
+
+### From Laravel Permission
+
+Shield Lite is fully compatible with Laravel Permission:
+
+```php
+// Existing Spatie Permission code works as-is
+$user->assignRole('admin');
+$user->givePermissionTo('edit articles');
+$user->can('edit articles');
+```
+
+### From Other Authorization Packages
+
+1. **Replace traits** in your User model with Shield Lite traits
+2. **Update Resource classes** to use `HasShieldLite` trait
+3. **Define permissions** using `defineGates()` method
+4. **Test thoroughly** - permissions should work the same
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**1. Permission not found error:**
+```bash
+# Make sure permissions exist
+\Spatie\Permission\Models\Permission::create(['name' => 'users.viewAny']);
+
+# Or use resource registration
+YourResource::registerGates();
+```
+
+**2. Trait conflicts:**
+```php
+// Use trait precedence to resolve conflicts
+use HasRoles {
+    HasRoles::assignRole insteadof HasShieldRoles;
+}
+```
+
+**3. Cache issues:**
+```bash
+# Clear permission cache
+php artisan permission:cache-reset
+php artisan optimize:clear
+```
+
+### Debug Mode
+
+Enable debug logging in your config:
+
+```php
+// config/shield-lite.php
+'debug' => env('SHIELD_LITE_DEBUG', false),
+```
+
+## 📖 API Reference
+
+### Traits
+
+- **`HasShieldRoles`** - Role management for User models
+- **`HasShieldPermissions`** - Permission management for User models  
+- **`AuthorizesShield`** - Authorization methods and super admin support
+- **`HasShieldLite`** - Resource authorization for Filament Resources
+
+### Methods
+
+**User Model Methods:**
+```php
+$user->assignRole(...$roles)              // Assign roles
+$user->removeRole(...$roles)              // Remove roles
+$user->hasRole($role, $guard = null)      // Check role
+$user->isSuperAdmin()                     // Check super admin
+$user->can($permission)                   // Check permission (Laravel native)
+```
+
+**Resource Methods:**
+```php
+YourResource::canAccess()                 // Check viewAny permission
+YourResource::canCreate()                 // Check create permission
+YourResource::canEdit($record)            // Check update permission
+YourResource::canDelete($record)          // Check delete permission
+YourResource::registerGates()             // Register defined permissions
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Shield Lite is open-sourced software licensed under the [MIT license](LICENSE.md).
+
+## 💪 Support
+
+- 📧 **Email**: [your-email@domain.com]
+- 🐛 **Issues**: [GitHub Issues](https://github.com/juniyasyos/shield-lite/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/juniyasyos/shield-lite/discussions)
+
+---
+
+**Made with ❤️ for the Laravel community**
 
 Add the `HasRoles` trait to your User model:
 
